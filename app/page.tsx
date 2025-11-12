@@ -1,14 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react"; // Đã thêm useEffect
+import { useState, useEffect, useRef } from "react"; // Đã thêm useRef cho carousel
+import axios from "axios";
+
 // --- COMPONENT NHẬP KHẨU ---
 import { useToast } from "@/hooks/use-toast";
-import axios from "axios";
+
 // --- CÁC THÀNH PHẦN GIAO DIỆN PHỤ TRỢ ---
-// Do các tệp này không được cung cấp, tôi tạo bản mẫu để tránh lỗi
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ShoppingCart, LogOut, User, ShoppingBag } from "lucide-react"; // <-- ĐÃ THÊM IMPORTS
+// Thêm CardContent (thường dùng với Card)
+import { Card, CardContent } from "@/components/ui/card";
+import { ShoppingCart, LogOut, User, ShoppingBag } from "lucide-react";
+
+// --- IMPORTS CHO CAROUSEL (MỚI) ---
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay"; // Plugin để tự động chạy
 
 // --- HÀM ĐỊNH DẠNG TIỀN TỆ ---
 const formatCurrency = (amount: number) => {
@@ -174,7 +186,7 @@ export function Navbar({}: NavbarProps) {
       // TODO: Logic đọc giỏ hàng (ví dụ: từ localStorage)
       // const storedCart = localStorage.getItem("cart");
       // if (storedCart) {
-      //   setCartCount(JSON.parse(storedCart).length);
+      //   setCartCount(JSON.parse(storedCart).length);
       // }
     } catch (error) {
       console.error("Failed to parse authData in Navbar:", error);
@@ -281,6 +293,85 @@ interface AuthData {
   };
   token: string;
 }
+
+// --- (THÊM MỚI) COMPONENT HERO CAROUSEL ---
+
+// CHỈNH SỬA TẠI ĐÂY: Thêm đường dẫn đến các ảnh của bạn
+// Đường dẫn này giả định ảnh nằm trong thư mục /public/carousel/
+const carouselImages = [
+  {
+    src: "/carousel/banner1.jpg", // Ví dụ: /public/carousel/banner1.jpg
+    alt: "Chương trình khuyến mãi 1",
+  },
+  {
+    src: "/carousel/banner2.png", // Ví dụ: /public/carousel/banner2.png
+    alt: "Sản phẩm mới 2",
+  },
+  {
+    src: "/carousel/banner3.webp", // Ví dụ: /public/carousel/banner3.webp
+    alt: "Bộ sưu tập 3",
+  },
+];
+
+function HeroCarousel() {
+  // Setup plugin autoplay
+  const plugin = useRef(
+    Autoplay({ delay: 5000, stopOnInteraction: true }) // 5 giây
+  );
+
+  return (
+    <section className="bg-white border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Carousel
+          plugins={[plugin.current]}
+          className="w-full"
+          onMouseEnter={plugin.current.stop}
+          onMouseLeave={plugin.current.reset}
+          opts={{
+            loop: true, // Lặp vô hạn
+          }}
+        >
+          <CarouselContent>
+            {carouselImages.map((image, index) => (
+              <CarouselItem key={index}>
+                {/* Chúng ta dùng div với aspect-ratio để đảm bảo kích thước
+                  trước khi ảnh tải xong, tránh nhảy layout (CLS)
+                */}
+                <div className="relative w-full aspect-[16/6] md:aspect-[16/5] overflow-hidden rounded-lg">
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="w-full h-full object-cover"
+                    onError={(e) =>
+                      // Ảnh dự phòng nếu link hỏng
+                      (e.currentTarget.src =
+                        "https://placehold.co/1200x450/e2e8f0/333?text=Image+Not+Found")
+                    }
+                  />
+                  {/* TÙY CHỌN: Nếu bạn muốn giữ lại text
+                    Bạn có thể bỏ comment khối div này để hiện text trên ảnh
+                  <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center text-center p-4">
+                    <h1 className="text-4xl font-bold text-white mb-4">
+                      Premium Tech Accessories
+                    </h1>
+                    <p className="text-lg text-gray-200">
+                      Discover our curated collection...
+                    </p>
+                  </div> 
+                  */}
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          {/* Nút điều hướng (ẩn trên di động, hiện trên desktop) */}
+          <CarouselPrevious className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 z-10" />
+          <CarouselNext className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 z-10" />
+        </Carousel>
+      </div>
+    </section>
+  );
+}
+// --- KẾT THÚC COMPONENT HERO CAROUSEL ---
 
 // --- COMPONENT TRANG CHỦ ---
 export default function HomePage() {
@@ -425,19 +516,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar /> {/* <-- ĐÃ KÍCH HOẠT LẠI (xóa prop cartCount) */}
-      {/* Hero Section */}
-      <section className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Premium Tech Accessories
-          </h1>
-          <p className="text-lg text-gray-600">
-            Discover our curated collection of high-quality electronics and
-            accessories
-          </p>
-        </div>
-      </section>
+      <Navbar /> {/* <-- Navbar tự quản lý state */}
+      {/* Hero Section (ĐÃ THAY THẾ BẰNG CAROUSEL) */}
+      <HeroCarousel />
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
