@@ -1,28 +1,151 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react"; // Đã thêm useRef cho carousel
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
-
-// --- COMPONENT NHẬP KHẨU ---
-import { useToast } from "@/hooks/use-toast";
-
-// --- CÁC THÀNH PHẦN GIAO DIỆN PHỤ TRỢ ---
-import { Button } from "@/components/ui/button";
-// Thêm CardContent (thường dùng với Card)
-import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingCart, LogOut, User, ShoppingBag } from "lucide-react";
+import {
+  ShoppingCart,
+  LogOut,
+  User,
+  ShoppingBag,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+// import Link from "next/link"; // Đã được thay thế bằng <a>
 
 // --- IMPORTS CHO CAROUSEL (MỚI) ---
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay"; // Plugin để tự động chạy
+// Giả lập các component này để tránh lỗi
+// Bạn nên import từ thư viện UI của mình (ví dụ: shadcn)
+const Carousel = ({
+  children,
+  className,
+  opts,
+  plugins,
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  opts?: any;
+  plugins?: any[];
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}) => <div className={`relative ${className || ""}`}>{children}</div>;
+const CarouselContent = ({ children }: { children: React.ReactNode }) => (
+  <div className="overflow-hidden flex">{children}</div>
+);
+const CarouselItem = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-w-0 flex-shrink-0 flex-grow-0 basis-full">{children}</div>
+);
+const CarouselPrevious = ({ className }: { className?: string }) => (
+  <button
+    className={`absolute h-8 w-8 rounded-full bg-white/50 border border-gray-200 shadow-md flex items-center justify-center top-1/2 -translate-y-1/2 left-4 ${
+      className || ""
+    }`}
+  >
+    <ChevronLeft size={16} />
+  </button>
+);
+const CarouselNext = ({ className }: { className?: string }) => (
+  <button
+    className={`absolute h-8 w-8 rounded-full bg-white/50 border border-gray-200 shadow-md flex items-center justify-center top-1/2 -translate-y-1/2 right-4 ${
+      className || ""
+    }`}
+  >
+    <ChevronRight size={16} />
+  </button>
+);
+// Mock plugin Autoplay
+const Autoplay = (options: any) => ({
+  name: "autoplay",
+  stop: () => {},
+  reset: () => {},
+  ...options,
+});
+// --- KẾT THÚC GIẢ LẬP CAROUSEL ---
 
-// --- HÀM ĐỊNH DẠNG TIỀN TỆ ---
+// --- HÀM HỖ TRỢ VÀ COMPONENT MẪU ---
+
+// Mock useToast (Đã có useCallback fix)
+const useToast = () => {
+  const toast = useCallback(
+    ({
+      title,
+      description,
+      variant,
+    }: {
+      title: string;
+      description: string;
+      variant?: string;
+    }) => {
+      console.log(`Toast (${variant || "default"}): ${title} - ${description}`);
+      if (variant === "destructive") {
+        console.error(`Toast Error: ${title} - ${description}`);
+      }
+    },
+    []
+  );
+
+  return {
+    toast,
+  };
+};
+
+// Component Mẫu: Button
+export function Button({
+  children,
+  onClick,
+  className,
+  variant,
+  size,
+  disabled,
+  type,
+}: {
+  children: React.ReactNode;
+  onClick?: (e: React.MouseEvent) => void; // <-- SỬA LỖI: Bỏ '?' (optional) khỏi 'e'
+  className?: string;
+  variant?: string;
+  size?: string;
+  disabled?: boolean;
+  type?: "button" | "submit" | "reset";
+}) {
+  const baseStyle =
+    "px-4 py-2 rounded-lg font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center gap-2";
+  const variantStyle =
+    variant === "outline"
+      ? "bg-transparent border border-gray-300 text-gray-900 hover:bg-gray-50"
+      : "bg-black text-white hover:bg-gray-800 disabled:opacity-50";
+  return (
+    <button
+      type={type || "button"}
+      onClick={onClick}
+      disabled={disabled}
+      className={`${baseStyle} ${variantStyle} ${className || ""}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+// Component Mẫu: Card
+export function Card({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`bg-white rounded-lg border border-gray-200 ${
+        className || ""
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Hàm định dạng tiền tệ
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -31,58 +154,105 @@ const formatCurrency = (amount: number) => {
 };
 
 // --- COMPONENT MẪU: ProductCard ---
-// (Tránh lỗi "Could not resolve")
 interface ProductCardProps {
   id: string;
   name: string;
-  price: string; // Đã được định dạng
+  price: number; // <-- Giá đã giảm
+  originalPrice: number; // <-- Giá gốc
+  discount: number; // <-- % giảm giá
   image: string;
-  onAddToCart: (event: React.MouseEvent) => void; // Chấp nhận sự kiện click
+  quantity: number;
+  onAddToCart: (event: React.MouseEvent) => void;
 }
 
-// KHẮC PHỤC LỖI: Cung cấp đầy đủ props cho hàm
 function ProductCard({
   id,
   name,
   price,
+  originalPrice,
+  discount,
   image,
+  quantity,
   onAddToCart,
 }: ProductCardProps) {
+  const hasDiscount = discount > 0;
+  const isOutOfStock = quantity <= 0;
+
   return (
-    <Card className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
-      <div className="w-full h-48 relative">
+    <Card className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 h-full flex flex-col group cursor-pointer">
+      {/* 1. Phần Ảnh */}
+      <div className="w-full aspect-video relative overflow-hidden">
+        {/* Dùng aspect-video để ảnh rộng hơn, giống banner */}
         <img
           src={image}
           alt={name}
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-contain transition-transform duration-300 group-hover:scale-105 ${
+            isOutOfStock ? "opacity-50 grayscale" : ""
+          }`}
           onError={(e) =>
             (e.currentTarget.src =
-              "https://placehold.co/300x300/e2e8f0/333?text=Image")
+              "https://placehold.co/300x200/e2e8f0/333?text=Image")
           }
         />
+
+        {/* Tag Hết hàng trên ảnh */}
+        {isOutOfStock && (
+          <div className="absolute inset-0 flex items-center justify-center ">
+            <span className="bg-red-600 text-white px-3 py-1 rounded-md font-bold text-sm shadow-sm">
+              Hết hàng
+            </span>
+          </div>
+        )}
       </div>
-      <div className="p-4 flex flex-col flex-grow">
-        <h3
-          className="text-lg font-semibold text-gray-900 truncate flex-grow"
-          title={name}
-        >
-          {name}
-        </h3>
-        <p className="text-gray-700 font-bold mt-1">{price}</p>
-        <Button
-          onClick={onAddToCart}
-          className="w-full mt-4 bg-black text-white hover:bg-gray-800 gap-2"
-        >
-          <ShoppingCart size={16} />
-          Add to Cart
-        </Button>
+
+      {/* 2. Phần Nội dung */}
+      <div className="p-4 flex flex-col flex-grow ">
+        {" "}
+        {/* Nền tối giả lập giống ảnh */}
+        {/* THAY ĐỔI: Tên và Số lượng trên cùng một hàng */}
+        <div className="flex justify-between items-center mb-2 gap-3">
+          <h3
+            className="text-base font-medium text-black truncate flex-1"
+            title={name}
+          >
+            {name}
+          </h3>
+          <span
+            className={`text-xs font-medium px-2 py-1 rounded-md whitespace-nowrap flex-shrink-0 ${
+              isOutOfStock
+                ? "bg-red-900 text-red-200"
+                : "bg-slate-800 text-slate-300"
+            }`}
+          >
+            SL: {quantity}
+          </span>
+        </div>
+        {/* Logic hiển thị giá: Giá giảm - Giá gốc - Tag % */}
+        <div className="mt-auto flex items-center gap-2 flex-wrap">
+          <span className="text-black font-bold text-lg">
+            {formatCurrency(price)}
+          </span>
+
+          {hasDiscount && (
+            <>
+              <span className="text-gray-400 text-sm line-through decoration-gray-400">
+                {formatCurrency(originalPrice)}
+              </span>
+              <span className="bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded flex items-center justify-center">
+                -{discount}%
+              </span>
+            </>
+          )}
+        </div>
+        {/* Ẩn nút Add to Cart để giống ảnh mẫu, 
+            người dùng click vào card (thẻ a bao ngoài) để xem chi tiết 
+        */}
       </div>
     </Card>
   );
 }
 
 // --- COMPONENT MẪU: ProductFilter ---
-// (Tránh lỗi "Could not resolve")
 interface ProductFilterProps {
   onSortChange: (sort: string) => void;
   onCategoryChange: (category: string) => void;
@@ -155,8 +325,6 @@ function ProductFilter({
 }
 
 // --- COMPONENT MẪU: Navbar ---
-// (Tránh lỗi "Could not resolve" cho Navbar)
-// Định nghĩa cấu trúc authData cho Navbar
 interface NavbarAuthData {
   user: {
     email: string;
@@ -164,16 +332,10 @@ interface NavbarAuthData {
   token: string;
 }
 
-// Props của Navbar - không cần cartCount
-interface NavbarProps {
-  // cartCount?: number // Đã xóa
-}
-
-export function Navbar({}: NavbarProps) {
+export function Navbar() {
   const [authInfo, setAuthInfo] = useState<{ email: string } | null>(null);
-  const [cartCount, setCartCount] = useState(0); // Navbar tự quản lý giỏ hàng (ví dụ)
+  const [cartCount, setCartCount] = useState(0);
 
-  // Effect để đọc localStorage khi component mount
   useEffect(() => {
     try {
       const storedData = localStorage.getItem("authData");
@@ -183,11 +345,10 @@ export function Navbar({}: NavbarProps) {
           setAuthInfo({ email: authData.user.email });
         }
       }
-      // TODO: Logic đọc giỏ hàng (ví dụ: từ localStorage)
-      // const storedCart = localStorage.getItem("cart");
-      // if (storedCart) {
-      //   setCartCount(JSON.parse(storedCart).length);
-      // }
+      const storedCartCount = localStorage.getItem("cartCount");
+      if (storedCartCount) {
+        setCartCount(parseInt(storedCartCount, 10));
+      }
     } catch (error) {
       console.error("Failed to parse authData in Navbar:", error);
       localStorage.removeItem("authData");
@@ -196,28 +357,23 @@ export function Navbar({}: NavbarProps) {
 
   const handleLogout = () => {
     localStorage.removeItem("authData");
-    // localStorage.removeItem("cart"); // Xóa cả giỏ hàng nếu cần
+    localStorage.removeItem("cartCount");
     setAuthInfo(null);
-    window.location.reload(); // Tải lại trang để về trạng thái đăng xuất
+    window.location.reload();
   };
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <a href="/" className="flex-shrink-0">
             <span className="text-xl font-bold text-black">MyEcom</span>
           </a>
-
-          {/* Center - Products Link */}
           <div className="hidden md:flex items-center gap-8">
             <a href="/" className="text-gray-700 hover:text-black font-medium">
               Products
             </a>
           </div>
-
-          {/* Right - Cart and Auth */}
           <div className="flex items-center gap-4">
             <a href="/cart" className="relative">
               <ShoppingBag className="w-6 h-6 text-gray-700 hover:text-black" />
@@ -227,7 +383,6 @@ export function Navbar({}: NavbarProps) {
                 </span>
               )}
             </a>
-
             {authInfo ? (
               <>
                 <a
@@ -263,61 +418,56 @@ export function Navbar({}: NavbarProps) {
 // --- KẾT THÚC COMPONENT Navbar ---
 
 // --- ĐỊNH NGHĨA INTERFACE DỮ LIỆU ---
-// Dữ liệu từ API
 interface ApiProduct {
   _id: string;
   name: string;
-  avatar_url?: string; // API có lúc dùng 'avatar_url'
-  imageUrl?: string; // có lúc dùng 'imageUrl'
+  avatar_url?: string;
+  imageUrl?: string;
   price: number;
-  category?: string; // API không trả về category, nhưng ta thêm vào để logic cũ hoạt động
+  category?: string;
   createdAt: string;
-  [key: string]: any; // Cho các trường khác
+  discount?: number;
+  quantity: number; // <-- THÊM MỚI: quantity
+  [key: string]: any;
 }
 
-// Dữ liệu đã được chuẩn hóa cho component
 interface Product {
   id: string;
   name: string;
-  price: number; // Sẽ giữ là số để sắp xếp
+  price: number; // <-- Giá đã giảm
+  originalPrice: number; // <-- Giá gốc
+  discount: number; // <-- % giảm giá
   image: string;
-  category: string; // Sẽ gán giá trị mặc định
-  createdAt: string; // Thêm trường createdAt
+  category: string;
+  createdAt: string;
+  quantity: number; // <-- THÊM MỚI: quantity
 }
 
-// Định nghĩa cấu trúc authData từ localStorage
 interface AuthData {
   user: {
     email: string;
-    // ... các trường user khác
   };
   token: string;
 }
 
-// --- (THÊM MỚI) COMPONENT HERO CAROUSEL ---
-
-// CHỈNH SỬA TẠI ĐÂY: Thêm đường dẫn đến các ảnh của bạn
-// Đường dẫn này giả định ảnh nằm trong thư mục /public/carousel/
+// --- COMPONENT HERO CAROUSEL ---
 const carouselImages = [
   {
-    src: "/carousel/banner1.jpg", // Ví dụ: /public/carousel/banner1.jpg
+    src: "/carousel/banner1.jpg",
     alt: "Chương trình khuyến mãi 1",
   },
   {
-    src: "/carousel/banner2.png", // Ví dụ: /public/carousel/banner2.png
+    src: "/carousel/banner2.png",
     alt: "Sản phẩm mới 2",
   },
   {
-    src: "/carousel/banner3.webp", // Ví dụ: /public/carousel/banner3.webp
+    src: "/carousel/banner3.webp",
     alt: "Bộ sưu tập 3",
   },
 ];
 
 function HeroCarousel() {
-  // Setup plugin autoplay
-  const plugin = useRef(
-    Autoplay({ delay: 5000, stopOnInteraction: true }) // 5 giây
-  );
+  const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
 
   return (
     <section className="bg-white border-b border-gray-200">
@@ -328,42 +478,26 @@ function HeroCarousel() {
           onMouseEnter={plugin.current.stop}
           onMouseLeave={plugin.current.reset}
           opts={{
-            loop: true, // Lặp vô hạn
+            loop: true,
           }}
         >
           <CarouselContent>
             {carouselImages.map((image, index) => (
               <CarouselItem key={index}>
-                {/* Chúng ta dùng div với aspect-ratio để đảm bảo kích thước
-                  trước khi ảnh tải xong, tránh nhảy layout (CLS)
-                */}
                 <div className="relative w-full aspect-[16/6] md:aspect-[16/5] overflow-hidden rounded-lg">
                   <img
                     src={image.src}
                     alt={image.alt}
                     className="w-full h-full object-cover"
                     onError={(e) =>
-                      // Ảnh dự phòng nếu link hỏng
                       (e.currentTarget.src =
                         "https://placehold.co/1200x450/e2e8f0/333?text=Image+Not+Found")
                     }
                   />
-                  {/* TÙY CHỌN: Nếu bạn muốn giữ lại text
-                    Bạn có thể bỏ comment khối div này để hiện text trên ảnh
-                  <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center text-center p-4">
-                    <h1 className="text-4xl font-bold text-white mb-4">
-                      Premium Tech Accessories
-                    </h1>
-                    <p className="text-lg text-gray-200">
-                      Discover our curated collection...
-                    </p>
-                  </div> 
-                  */}
                 </div>
               </CarouselItem>
             ))}
           </CarouselContent>
-          {/* Nút điều hướng (ẩn trên di động, hiện trên desktop) */}
           <CarouselPrevious className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 z-10" />
           <CarouselNext className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 z-10" />
         </Carousel>
@@ -377,7 +511,6 @@ function HeroCarousel() {
 export default function HomePage() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  // const [cartCount, setCartCount] = useState(0); // ĐÃ XÓA - Navbar tự quản lý
   const [selectedSort, setSelectedSort] = useState("featured");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const { toast } = useToast();
@@ -391,22 +524,14 @@ export default function HomePage() {
       // 1. Lấy token từ localStorage
       try {
         const storedData = localStorage.getItem("authData");
-        if (!storedData) {
-          toast({
-            title: "Authentication Error",
-            description: "Please log in to view products.",
-            variant: "destructive",
-          });
-          window.location.href = "/login"; // Chuyển hướng nếu chưa đăng nhập
-          return;
+        if (storedData) {
+          const authData: AuthData = JSON.parse(storedData);
+          token = authData.token;
         }
-        const authData: AuthData = JSON.parse(storedData);
-        token = authData.token;
+        // Bỏ check bắt buộc login ở trang chủ
       } catch (error) {
         console.error("Failed to parse authData", error);
         localStorage.removeItem("authData");
-        window.location.href = "/login";
-        return;
       }
 
       // 2. Gọi API với token
@@ -416,9 +541,7 @@ export default function HomePage() {
         const response = await axios.get(
           "http://localhost:3002", // Gọi qua Nginx Gateway
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: token ? { Authorization: `Bearer ${token}` } : {}, // Gửi header nếu có token
           }
         );
 
@@ -426,45 +549,47 @@ export default function HomePage() {
 
         if (result.success && Array.isArray(result.data)) {
           // 3. Chuyển đổi (map) dữ liệu API sang định dạng component
-          const mappedProducts: Product[] = result.data
-            .filter((p: ApiProduct) => p.price > 0) // Lọc các sản phẩm có giá âm
-            .map((p: ApiProduct) => ({
+          const mappedProducts: Product[] = result.data.map((p: ApiProduct) => {
+            // --- LOGIC GIÁ MỚI ---
+            const discountPercent = p.discount || 0;
+            const originalPrice = p.price;
+            const discountedPrice = originalPrice * (1 - discountPercent / 100);
+            // --- KẾT THÚC LOGIC GIÁ MỚI ---
+
+            return {
               id: p._id,
               name: p.name,
-              price: p.price, // Giữ là SỐ để sắp xếp
+              price: discountedPrice,
+              originalPrice: originalPrice,
+              discount: discountPercent,
+              quantity: p.quantity, // <-- MAP SỐ LƯỢNG
               image:
                 p.imageUrl ||
                 p.avatar_url ||
-                "https://placehold.co/300x300/e2e8f0/333?text=Product", // Dùng ảnh đại diện (với fallback)
-              category: p.category || "accessories", // Gán category mặc định vì API không có
+                "https://placehold.co/300x300/e2e8f0/333?text=Product",
+              category: p.category || "accessories",
               createdAt: p.createdAt,
-            }));
+            };
+          });
           setAllProducts(mappedProducts);
         } else {
           throw new Error(result.message || "Failed to parse product data");
         }
       } catch (error: any) {
         console.error("API Error:", error);
-
-        // --- Xử lý lỗi Axios (chi tiết hơn) ---
         let errorMessage = "Could not fetch products.";
         if (axios.isAxiosError(error) && error.response) {
-          // Lỗi từ server (4xx, 5xx)
           errorMessage =
             error.response.data?.message ||
             `Server error: ${error.response.status}`;
         } else if (axios.isAxiosError(error) && error.request) {
-          // Lỗi mạng (không kết nối được)
           errorMessage = "Network Error: Could not connect to the server.";
         } else if (error.message) {
-          // Lỗi khác (ví dụ: lỗi parsing ở trên hoặc lỗi logic)
           errorMessage = error.message;
         }
-        // --- Kết thúc xử lý lỗi ---
-
         toast({
           title: "Error",
-          description: errorMessage, // Dùng errorMessage chi tiết
+          description: errorMessage,
           variant: "destructive",
         });
       } finally {
@@ -484,7 +609,7 @@ export default function HomePage() {
 
   // Sắp xếp
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    // CẬP NHẬT: So sánh trực tiếp bằng SỐ, không cần parse string
+    // CẬP NHẬT: So sánh bằng giá ĐÃ GIẢM (price)
     const priceA = a.price;
     const priceB = b.price;
 
@@ -494,30 +619,26 @@ export default function HomePage() {
       case "price-high":
         return priceB - priceA;
       case "newest":
-        // Sắp xếp theo ngày tạo (mới nhất trước)
         return (
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
-      default: // 'featured' hoặc mặc định
-        return 0; // Hoặc logic 'featured' của bạn, ví dụ: theo sold_count
+      default:
+        return 0;
     }
   });
 
   const handleAddToCart = (productName: string) => {
-    // setCartCount(cartCount + 1); // ĐÃ XÓA - Navbar không nhận prop này
     toast({
       title: "Added to Cart",
       description: `${productName} has been added to your cart.`,
     });
-    // Ghi chú: Navbar sẽ cần logic riêng để cập nhật số lượng (ví dụ: đọc từ localStorage hoặc Context)
   };
 
   // --- RENDER ---
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar /> {/* <-- Navbar tự quản lý state */}
-      {/* Hero Section (ĐÃ THAY THẾ BẰNG CAROUSEL) */}
+      <Navbar />
       <HeroCarousel />
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -537,7 +658,6 @@ export default function HomePage() {
             {isLoading ? (
               <div className="text-center py-12">
                 <p className="text-gray-600 text-lg">Loading products...</p>
-                {/* Bạn có thể thêm spinner ở đây */}
               </div>
             ) : sortedProducts.length > 0 ? (
               <>
@@ -549,19 +669,21 @@ export default function HomePage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {sortedProducts.map((product) => (
-                    // Bọc ProductCard bằng thẻ <a>
+                    // Bọc ProductCard bằng thẻ <a> (dùng 'a' thay 'Link')
                     <a
                       href={`/product/${product.id}`}
                       key={product.id}
                       className="group"
                     >
                       <ProductCard
-                        id={product.id} // Truyền prop
-                        name={product.name} // Truyền prop
-                        image={product.image} // Truyền prop
-                        price={formatCurrency(product.price)} // Định dạng giá thành chuỗi VND
+                        id={product.id}
+                        name={product.name}
+                        image={product.image}
+                        price={product.price} // Giá đã giảm (SỐ)
+                        originalPrice={product.originalPrice} // Giá gốc (SỐ)
+                        discount={product.discount} // % giảm (SỐ)
+                        quantity={product.quantity} // Số lượng
                         onAddToCart={(e) => {
-                          // Ngăn thẻ <a> điều hướng khi nhấp vào nút
                           e.preventDefault();
                           e.stopPropagation();
                           handleAddToCart(product.name);

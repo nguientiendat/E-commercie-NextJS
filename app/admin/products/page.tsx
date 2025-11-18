@@ -15,7 +15,7 @@ import {
 // --- THÊM MỚI: Import Modal từ đúng đường dẫn ---
 import { ProductModal } from "@/components/admin/product-modal";
 import { set } from "date-fns";
-
+import Link from "next/link";
 // --- COMPONENT MẪU VÀ HÀM HỖ TRỢ ---
 
 // Mock useToast (Đã có useCallback fix)
@@ -153,12 +153,12 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <a href="/" className="flex-shrink-0">
+          <Link href="/" className="flex-shrink-0">
             <span className="text-xl font-bold text-black">MyEcom</span>
-          </a>
-          <a href="/" className="text-gray-700 hover:text-black font-medium">
+          </Link>
+          <Link href="/" className="text-gray-700 hover:text-black font-medium">
             Products
-          </a>
+          </Link>
           {authInfo && authInfo.role === "ADMIN" && (
             <a
               href="/admin/products"

@@ -259,7 +259,8 @@ export default function CartPage() {
                 detailResponses[index].data.data;
 
               return {
-                id: item._id, // ID của cart item
+                // SỬA LỖI QUAN TRỌNG: Fallback dùng productId nếu _id thiếu
+                id: item._id || item.productId,
                 productId: item.productId,
                 name: productDetail.name, // <-- Từ API chi tiết
                 image:
@@ -492,9 +493,10 @@ export default function CartPage() {
           {/* Cart Items */}
           <div className="lg:col-span-2">
             <div className="space-y-4 mb-8">
-              {cartItems.map((item) => (
+              {cartItems.map((item, index) => (
                 <CartItem
-                  key={item.id}
+                  // SỬA LỖI: Sử dụng key an toàn (item.id hoặc fallback index)
+                  key={item.id || `item-${index}`}
                   id={item.id}
                   name={item.name}
                   image={item.image}

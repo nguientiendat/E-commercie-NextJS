@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // --- CÁC COMPONENT MẪU (STUBS) ---
 // (Các component này được định nghĩa ở đây để tránh lỗi 'Could not resolve')
-
+import Link from "next/link"; // <-- THÊM MỚI
 // Component Mẫu: Button
 export function Button({
   children,
@@ -147,26 +147,29 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <a href="/" className="flex-shrink-0">
+          <Link href="/" className="flex-shrink-0">
             <span className="text-xl font-bold text-black">MyEcom</span>
-          </a>
+          </Link>
           <div className="hidden md:flex items-center gap-8">
-            <a href="/" className="text-gray-700 hover:text-black font-medium">
+            <Link
+              href="/"
+              className="text-gray-700 hover:text-black font-medium"
+            >
               Products
-            </a>
+            </Link>
           </div>
           <div className="flex items-center gap-4">
-            <a href="/cart" className="relative">
+            <Link href="/cart" className="relative">
               <ShoppingBag className="w-6 h-6 text-gray-700 hover:text-black" />
               {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
-            </a>
+            </Link>
             {authInfo ? (
               <>
-                <a
+                <Link
                   href="/profile"
                   className="flex items-center gap-2 text-gray-700 hover:text-black"
                 >
@@ -174,7 +177,7 @@ export function Navbar() {
                   <span className="text-sm font-medium hidden sm:block truncate max-w-xs">
                     {authInfo.email}
                   </span>
-                </a>
+                </Link>
                 <Button
                   variant="outline"
                   size="sm"
@@ -186,9 +189,9 @@ export function Navbar() {
                 </Button>
               </>
             ) : (
-              <a href="/login">
+              <Link href="/login">
                 <Button size="sm">Login</Button>
-              </a>
+              </Link>
             )}
           </div>
         </div>
