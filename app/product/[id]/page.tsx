@@ -1,5 +1,5 @@
 "use client";
-
+export const runtime = "edge";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import {
@@ -295,7 +295,7 @@ export default function ProductPage() {
       try {
         // ... (Comment không đổi)
         const response = await axios.get(
-          `http://localhost:3002/getdetailproduct/${id}`, // <-- SỬ DỤNG 'id' TỪ BÊN TRÊN
+          `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/products/getdetailproduct/${id}`, // <-- SỬ DỤNG 'id' TỪ BÊN TRÊN
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -373,7 +373,7 @@ export default function ProductPage() {
     // 2. Gọi API /addtocart (MỚI)
     try {
       const response = await axios.post(
-        "http://localhost:3003/addtocart", // URL bạn yêu cầu
+        `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/cart/addtocart`, // URL bạn yêu cầu
         {
           productId: product._id, // Body bạn yêu cầu
           quantity: quantity, // THÊM MỚI: Gửi cả số lượng
