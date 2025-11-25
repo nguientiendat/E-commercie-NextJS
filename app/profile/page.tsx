@@ -1,5 +1,5 @@
 "use client";
-export const runtime = "edge";
+// export const runtime = "edge";
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 // import Link from "next/link"; // <-- Đã xóa
