@@ -272,7 +272,7 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
 
       // --- BƯỚC 4: GỌI API BACKEND ---
       const backendResponse = await axios.post(
-        "http://localhost:3002/addproduct",
+        `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/products/addproduct`,
         formDataApi, // Gửi FormData
         {
           headers: {

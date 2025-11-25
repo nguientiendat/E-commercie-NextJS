@@ -223,11 +223,14 @@ export default function CartPage() {
 
       // 2. Gọi API /getcart
       try {
-        const cartResponse = await axios.get("http://localhost:3003/getcart", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const cartResponse = await axios.get(
+          `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/cart/getcart`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         // API trả về { _id: "...", items: [...] }
         const cartData = cartResponse.data;

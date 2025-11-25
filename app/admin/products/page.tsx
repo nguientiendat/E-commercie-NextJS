@@ -279,7 +279,7 @@ export default function AdminProductsPage() {
 
       try {
         const response = await axios.post(
-          "http://localhost:3002/getproductsadmin",
+          `${process.env.NEXT_PUBLIC_GATEWAY_API}/getproductsadmin`,
           {},
           {
             headers: {
@@ -343,7 +343,7 @@ export default function AdminProductsPage() {
 
       // --- SỬA LẠI ---: Nên gọi lại API /getproductsadmin thay vì /
       const response = await axios.post(
-        "http://localhost:3002/getproductsadmin",
+        `${process.env.NEXT_PUBLIC_GATEWAY_API}/getproductsadmin`,
         {},
         {
           headers: {
@@ -403,7 +403,8 @@ export default function AdminProductsPage() {
 
       try {
         await axios.post(
-          "http://localhost:3002/deleteproduct",
+          // "http://localhost:3002/deleteproduct"
+          `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/products/deleteproduct`,
           { productId }, // Body
           {
             headers: {
