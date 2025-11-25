@@ -1,6 +1,7 @@
 "use client";
-// export const runtime = "edge";
-import { useState, useEffect } from "react";
+
+import { useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 import axios from "axios";
 import {
   ShoppingBag,
@@ -12,13 +13,13 @@ import {
   LogOut,
   User,
 } from "lucide-react";
-import { useParams } from "next/navigation"; // <-- THÊM MỚI
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
-// --- CÁC COMPONENT MẪU (STUBS) ---
-// (Các component này được định nghĩa ở đây để tránh lỗi 'Could not resolve')
-import Link from "next/link"; // <-- THÊM MỚI
-// Component Mẫu: Button
+// ... (Keep your existing components: Button, Card, ProductReviews, Navbar unchanged) ...
+
+// --- COMPONENT MẪU (STUBS) ---
+// (Copy lại các component Button, Card, ProductReviews, Navbar từ code cũ của bạn vào đây)
 export function Button({
   children,
   onClick,
@@ -35,7 +36,7 @@ export function Button({
   disabled?: boolean;
 }) {
   const baseStyle =
-    "px-4 py-2 rounded-lg font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center"; // <-- SỬA LỖI: Thêm flex, items-center, justify-center
+    "px-4 py-2 rounded-lg font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center";
   const variantStyle =
     variant === "outline"
       ? "bg-transparent border border-gray-300 text-gray-900 hover:bg-gray-50"
@@ -51,7 +52,6 @@ export function Button({
   );
 }
 
-// Component Mẫu: Card
 export function Card({
   children,
   className,
@@ -66,7 +66,6 @@ export function Card({
   );
 }
 
-// Component Mẫu: ProductReviews
 export function ProductReviews() {
   return (
     <Card className="p-6 bg-white border border-gray-200">
@@ -81,7 +80,6 @@ export function ProductReviews() {
   );
 }
 
-// Định nghĩa cấu trúc authData cho Navbar
 interface NavbarAuthData {
   user: {
     email: string;
@@ -89,14 +87,11 @@ interface NavbarAuthData {
   token: string;
 }
 
-// Component Mẫu: Navbar
 export function Navbar() {
   const [authInfo, setAuthInfo] = useState<{ email: string } | null>(null);
-  const [cartCount, setCartCount] = useState(0); // Navbar tự quản lý giỏ hàng (ví dụ)
+  const [cartCount, setCartCount] = useState(0);
 
-  // Effect để đọc localStorage khi component mount
   useEffect(() => {
-    // Hàm xử lý sự kiện cartUpdated
     const handleCartUpdate = (event: Event) => {
       const customEvent = event as CustomEvent;
       if (typeof customEvent.detail.newCount === "number") {
@@ -104,12 +99,9 @@ export function Navbar() {
       }
     };
 
-    // Lắng nghe sự kiện (nếu một trang khác cập nhật giỏ hàng)
     window.addEventListener("cartUpdated", handleCartUpdate);
 
-    // --- Logic chạy 1 lần khi mount ---
     try {
-      // Đọc auth data
       const storedData = localStorage.getItem("authData");
       if (storedData) {
         const authData: NavbarAuthData = JSON.parse(storedData);
@@ -118,7 +110,6 @@ export function Navbar() {
         }
       }
 
-      // Đọc cartCount ban đầu (nếu có)
       const storedCartCount = localStorage.getItem("cartCount");
       if (storedCartCount) {
         setCartCount(parseInt(storedCartCount, 10));
@@ -126,19 +117,17 @@ export function Navbar() {
     } catch (error) {
       console.error("Failed to parse data from localStorage", error);
       localStorage.removeItem("authData");
-      localStorage.removeItem("cartCount"); // Xóa cả cart count hỏng
+      localStorage.removeItem("cartCount");
     }
-    // --- Kết thúc logic mount ---
 
-    // Cleanup: gỡ bỏ listener khi component unmount
     return () => {
       window.removeEventListener("cartUpdated", handleCartUpdate);
     };
-  }, []); // Mảng rỗng đảm bảo useEffect chỉ chạy một lần khi mount
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("authData");
-    localStorage.removeItem("cartCount"); // <-- THÊM MỚI: Xóa cart count khi logout
+    localStorage.removeItem("cartCount");
     setAuthInfo(null);
     window.location.reload();
   };
@@ -182,7 +171,7 @@ export function Navbar() {
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
-                  className="gap-2 bg-transparent" // Lớp "gap-2" đã có, flex sẽ được áp dụng từ baseStyle
+                  className="gap-2 bg-transparent"
                 >
                   <LogOut className="w-4 h-4" />
                   Logout
@@ -199,6 +188,7 @@ export function Navbar() {
     </nav>
   );
 }
+
 // --- KẾT THÚC COMPONENT MẪU ---
 
 // --- HÀM HỖ TRỢ ---
@@ -210,7 +200,6 @@ const formatCurrency = (amount: number) => {
 };
 
 // --- ĐỊNH NGHĨA INTERFACE ---
-// Định nghĩa cấu trúc authData từ localStorage
 interface AuthData {
   user: {
     email: string;
@@ -218,88 +207,72 @@ interface AuthData {
   token: string;
 }
 
-// Dựa trên dữ liệu API của bạn
 interface ApiProductDetail {
   _id: string;
   name: string;
   price: number;
   avatar_url?: string;
   imageUrl?: string;
-  rating?: number; // SỬA LỖI: Đánh dấu là optional
-  reviews?: number; // SỬA LỖI: Đánh dấu là optional
-  inStock?: boolean; // SỬA LỖI: Đánh dấu là optional
-  quantity: number; // API có gửi trường này
-  description?: string; // SỬA LỖI: Đánh dấu là optional
-  features?: string[]; // SỬA LỖI: Đánh dấu là optional
-  specifications?: Record<string, string>; // SỬA LỖI: Đánh dấu là optional
-  [key: string]: any; // Cho các trường khác
+  rating?: number;
+  reviews?: number;
+  inStock?: boolean;
+  quantity: number;
+  description?: string;
+  features?: string[];
+  specifications?: Record<string, string>;
+  [key: string]: any;
 }
 
-// --- SỬA LỖI: THAY ĐỔI CHỮ KÝ COMPONENT ---
-// export default function ProductPage({ params }: { params: { id: string } }) { // <-- XÓA DÒNG NÀY
-export default function ProductPage() {
-  // <-- THAY BẰNG DÒNG NÀY
-  // --- STATE ---
+// Component con để xử lý logic lấy ID và fetch dữ liệu
+function ProductContent() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id"); // Lấy id từ URL dạng ?id=...
+
   const [product, setProduct] = useState<ApiProductDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAddingToCart, setIsAddingToCart] = useState(false); // <-- THÊM MỚI
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  // const [cartCount, setCartCount] = useState(0); // Navbar tự quản lý
   const { toast } = useToast();
-  // const router = useRouter(); // Đã xóa
-
-  // --- SỬA LỖI: SỬ DỤNG HOOK useParams ĐỂ LẤY ID ---
-  const params = useParams(); // Lấy params từ hook
-  const id = params.id as string; // Lấy 'id' từ params, ép kiểu về string
 
   // --- EFFECT GỌI API ---
   useEffect(() => {
     const fetchProductDetails = async () => {
       setIsLoading(true);
       setError(null);
-      // const { id } = params; // <-- XÓA DÒNG NÀY
 
       if (!id) {
-        // <-- SỬ DỤNG 'id' TỪ BÊN TRÊN
         setError("Product ID is missing.");
         setIsLoading(false);
         return;
       }
 
-      // 1. Lấy token (giống hệt home-page.tsx)
+      // 1. Lấy token
       let token: string | null = null;
       try {
         const storedData = localStorage.getItem("authData");
-        if (!storedData) {
-          toast({
-            title: "Authentication Error",
-            description: "Please log in to view products.",
-            variant: "destructive",
-          });
-          window.location.href = "/login";
-          return;
+        // Chúng ta cho phép xem sản phẩm mà không cần login, token là optional
+        if (storedData) {
+          const authData: AuthData = JSON.parse(storedData);
+          token = authData.token;
         }
-        const authData: AuthData = JSON.parse(storedData);
-        token = authData.token;
       } catch (error) {
         console.error("Failed to parse authData", error);
-        localStorage.removeItem("authData");
-        window.location.href = "/login";
-        return;
+        // Không bắt buộc login ở đây để xem sản phẩm
       }
 
       // 2. Gọi API bằng Axios
       try {
-        // ... (Comment không đổi)
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/products/getdetailproduct/${id}`, // <-- SỬ DỤNG 'id' TỪ BÊN TRÊN
+          `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/products/getdetailproduct/${id}`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: token
+              ? {
+                  Authorization: `Bearer ${token}`,
+                }
+              : {},
           }
         );
 
@@ -333,20 +306,16 @@ export default function ProductPage() {
       }
     };
 
-    // Thêm kiểm tra, chỉ chạy fetch nếu có 'id'
     if (id) {
       fetchProductDetails();
     }
-    // --- SỬA LỖI: THAY ĐỔI DEPENDENCY ARRAY ---
-  }, [id, toast]); // Chạy lại nếu 'id' thay đổi (thay vì params.id)
+  }, [id, toast]);
 
   // --- HÀM XỬ LÝ ---
   const handleAddToCart = async () => {
-    // <-- SỬA ĐỔI: Thêm async
     if (!product) return;
-    setIsAddingToCart(true); // <-- THÊM MỚI
+    setIsAddingToCart(true);
 
-    // 1. Lấy token (copy-pasted from useEffect)
     let token: string | null = null;
     try {
       const storedData = localStorage.getItem("authData");
@@ -357,7 +326,7 @@ export default function ProductPage() {
           variant: "destructive",
         });
         window.location.href = "/login";
-        setIsAddingToCart(false); // <-- THÊM MỚI
+        setIsAddingToCart(false);
         return;
       }
       const authData: AuthData = JSON.parse(storedData);
@@ -366,44 +335,33 @@ export default function ProductPage() {
       console.error("Failed to parse authData", error);
       localStorage.removeItem("authData");
       window.location.href = "/login";
-      setIsAddingToCart(false); // <-- THÊM MỚI
+      setIsAddingToCart(false);
       return;
     }
 
-    // 2. Gọi API /addtocart (MỚI)
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/cart/addtocart`, // URL bạn yêu cầu
+        `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/cart/addtocart`,
         {
-          productId: product._id, // Body bạn yêu cầu
-          quantity: quantity, // THÊM MỚI: Gửi cả số lượng
+          productId: product._id,
+          quantity: quantity,
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Header bạn yêu cầu
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      // --- SỬA ĐỔI LOGIC XỬ LÝ PHẢN HỒI ---
-      // API của bạn trả về 200 và đối tượng giỏ hàng khi thành công,
-      // không có trường 'success' hay 'message'.
       if (response.status === 200 && response.data && response.data.items) {
-        // Thành công! (Kiểm tra bằng status 200 và sự tồn tại của mảng 'items')
         toast({
           title: "Added to Cart",
           description: `${quantity}x ${product.name} added to your cart.`,
         });
 
-        // --- CẬP NHẬT MỚI: Gửi sự kiện để Navbar cập nhật ---
         try {
-          // Lấy số lượng loại sản phẩm từ phản hồi
           const newCartItemCount = response.data.items.length;
-
-          // 1. Lưu vào localStorage để tải lại trang vẫn đúng
           localStorage.setItem("cartCount", newCartItemCount.toString());
-
-          // 2. Gửi sự kiện để Navbar đang mở cập nhật ngay lập tức
           window.dispatchEvent(
             new CustomEvent("cartUpdated", {
               detail: { newCount: newCartItemCount },
@@ -412,12 +370,9 @@ export default function ProductPage() {
         } catch (e) {
           console.warn("Could not update cart count", e);
         }
-        // --- KẾT THÚC CẬP NHẬT ---
       } else {
-        // Lỗi không mong muốn, API trả về 200 nhưng không có dữ liệu
         throw new Error("Received an invalid response from the cart server.");
       }
-      // --- KẾT THÚC SỬA ĐỔI ---
     } catch (error: any) {
       console.error("Add to cart API Error:", error);
       let errorMessage = "Could not add item to cart.";
@@ -436,7 +391,7 @@ export default function ProductPage() {
         variant: "destructive",
       });
     } finally {
-      setIsAddingToCart(false); // <-- THÊM MỚI
+      setIsAddingToCart(false);
     }
   };
 
@@ -470,9 +425,9 @@ export default function ProductPage() {
             Error Fetching Product
           </h1>
           <p className="text-gray-700 mb-8">{error}</p>
-          <a href="/">
+          <Link href="/">
             <Button>Go Back Home</Button>
-          </a>
+          </Link>
         </main>
       </div>
     );
@@ -489,23 +444,21 @@ export default function ProductPage() {
           <p className="text-gray-700 mb-8">
             Sorry, we couldn't find the product you're looking for.
           </p>
-          <a href="/">
+          <Link href="/">
             <Button>Go Back Home</Button>
-          </a>
+          </Link>
         </main>
       </div>
     );
   }
 
-  // --- RENDER KHI CÓ SẢN PHẨM ---
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* <Navbar cartCount={cartCount} /> */} {/* Navbar tự quản lý */}
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Product Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
-          {/* Product Image - Thay thế <Image> bằng <img> */}
+          {/* Product Image */}
           <div className="flex items-center justify-center bg-white rounded-lg border border-gray-200 h-96 p-4">
             <img
               src={
@@ -534,7 +487,6 @@ export default function ProductPage() {
                     <span
                       key={i}
                       className={
-                        // SỬA LỖI: Thêm giá trị mặc định (0)
                         i <= Math.round(product.rating || 0)
                           ? "text-yellow-400"
                           : "text-gray-300"
@@ -545,7 +497,6 @@ export default function ProductPage() {
                   ))}
                 </div>
                 <span className="text-gray-600">
-                  {/* SỬA LỖI: Thêm giá trị mặc định (0) */}
                   {product.rating || 0} ({product.reviews || 0} reviews)
                 </span>
               </div>
@@ -555,12 +506,10 @@ export default function ProductPage() {
             </div>
 
             <p className="text-gray-700 leading-relaxed">
-              {/* SỬA LỖI: Thêm giá trị mặc định */}
               {product.description || "No description available."}
             </p>
 
             {/* Features */}
-            {/* SỬA LỖI: Chỉ render nếu product.features tồn tại */}
             {product.features && product.features.length > 0 && (
               <div>
                 <h3 className="font-semibold text-gray-900 mb-3">
@@ -581,7 +530,6 @@ export default function ProductPage() {
             )}
 
             {/* Stock Status */}
-            {/* SỬA LỖI: Dùng 'quantity' từ API để xác định còn hàng */}
             {product.quantity > 0 ? (
               <div className="text-green-600 font-semibold">In Stock</div>
             ) : (
@@ -594,7 +542,7 @@ export default function ProductPage() {
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className="px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  disabled={product.quantity <= 0 || isAddingToCart} // Vô hiệu hóa khi hết hàng
+                  disabled={product.quantity <= 0 || isAddingToCart}
                 >
                   −
                 </button>
@@ -602,19 +550,17 @@ export default function ProductPage() {
                 <button
                   onClick={() => setQuantity(quantity + 1)}
                   className="px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  disabled={product.quantity <= 0 || isAddingToCart} // Vô hiệu hóa khi hết hàng
+                  disabled={product.quantity <= 0 || isAddingToCart}
                 >
                   +
                 </button>
               </div>
               <Button
                 onClick={handleAddToCart}
-                className="flex-1 bg-black text-white hover:bg-gray-800 gap-2" // Lớp "gap-2" đã có, flex sẽ được áp dụng từ baseStyle
-                // SỬA LỖI: Dùng 'quantity' HOẶC 'isAddingToCart' để disable nút
+                className="flex-1 bg-black text-white hover:bg-gray-800 gap-2"
                 disabled={product.quantity <= 0 || isAddingToCart}
               >
                 <ShoppingBag size={20} />
-                {/* THÊM MỚI: Hiển thị trạng thái loading */}
                 {isAddingToCart
                   ? "Adding..."
                   : product.quantity <= 0
@@ -624,7 +570,7 @@ export default function ProductPage() {
               <Button
                 variant="outline"
                 onClick={handleWishlist}
-                className={`${isWishlisted ? "bg-red-50 text-red-600" : ""}`} // flex sẽ được áp dụng từ baseStyle
+                className={`${isWishlisted ? "bg-red-50 text-red-600" : ""}`}
               >
                 <Heart
                   size={20}
@@ -632,8 +578,6 @@ export default function ProductPage() {
                 />
               </Button>
               <Button variant="outline">
-                {" "}
-                {/* flex sẽ được áp dụng từ baseStyle */}
                 <Share2 size={20} />
               </Button>
             </div>
@@ -666,7 +610,6 @@ export default function ProductPage() {
         </div>
 
         {/* Specifications */}
-        {/* SỬA LỖI: Chỉ render nếu product.specifications tồn tại */}
         {product.specifications &&
           Object.keys(product.specifications).length > 0 && (
             <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
@@ -693,5 +636,13 @@ export default function ProductPage() {
         <ProductReviews />
       </main>
     </div>
+  );
+}
+
+export default function ProductPageWrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProductContent />
+    </Suspense>
   );
 }
