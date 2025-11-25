@@ -1,5 +1,5 @@
 "use client";
-// export const runtime = "edge";
+export const runtime = "edge";
 import React, { useEffect, useState } from "react"; // <-- SỬA LỖI: Thêm 'React'
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
