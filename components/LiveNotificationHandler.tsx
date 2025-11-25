@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { io } from "socket.io-client";
 import toast, { Toaster } from "react-hot-toast";
 
-const SOCKET_IO_URL = `${process.env.NEXT_PUBLIC_NOTIFICATION_URL}/api/notification`;
+const SOCKET_IO_URL = `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/notification`;
 const socket = io(SOCKET_IO_URL);
 
 export default function LiveNotificationHandler() {
