@@ -539,7 +539,7 @@ export default function HomePage() {
         console.log("Dang fetch voi axios (Có header Auth)");
 
         const response = await axios.get(
-          "http://localhost:3002", // Gọi qua Nginx Gateway
+          '"http://localhost:3002"', // Gọi qua Nginx Gateway
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {}, // Gửi header nếu có token
           }
