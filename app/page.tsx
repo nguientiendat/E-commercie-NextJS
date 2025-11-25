@@ -1,5 +1,5 @@
 "use client";
-
+export const runtime = "edge";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import {
@@ -539,7 +539,7 @@ export default function HomePage() {
         console.log("Dang fetch voi axios (Có header Auth)");
 
         const response = await axios.get(
-          '"http://localhost:3002"', // Gọi qua Nginx Gateway
+          `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/products`, // Gọi qua Nginx Gateway
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {}, // Gửi header nếu có token
           }
