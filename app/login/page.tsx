@@ -1,5 +1,6 @@
-import { Navbar } from "@/components/navbar"
-import { LoginForm } from "@/components/login-form"
+// export const runtime = "edge";
+import { Navbar } from "@/components/navbar";
+import { LoginForm } from "@/components/login-form";
 
 export default function LoginPage() {
   return (
@@ -19,5 +20,5 @@ export default function LoginPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

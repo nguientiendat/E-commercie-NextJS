@@ -1,5 +1,5 @@
 "use client";
-
+// export const runtime = 'edge';
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 // import Link from "next/link"; // <-- Đã xóa
@@ -279,7 +279,7 @@ export default function ProfilePage() {
       // 2. Gọi API POST (như yêu cầu)
       try {
         const response = await axios.post(
-          "http://localhost:3007/profile",
+          `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/user/profile`,
           {}, // Body rỗng (như yêu cầu)
           {
             headers: {

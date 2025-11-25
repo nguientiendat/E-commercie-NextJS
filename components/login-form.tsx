@@ -50,14 +50,17 @@ export function LoginForm() {
 
     try {
       // Gửi yêu cầu POST đến API
-      const response = await fetch("http://localhost:3001/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        // Gửi email và password trong body
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          // Gửi email và password trong body
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
       if (response.ok) {
         // Xử lý khi đăng nhập thành công (HTTP status 200-299)

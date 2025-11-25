@@ -246,7 +246,7 @@ export default function CartPage() {
           const detailPromises = cartData.items.map((item: ApiCartItem) => {
             return axios.get(
               // Gọi API chi tiết (giống như trang product-page)
-              `http://localhost:3002/getdetailproduct/${item.productId}`,
+              `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/product/getdetailproduct/${item.productId}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
           });
@@ -367,7 +367,7 @@ export default function CartPage() {
     // 2. Gọi API /removefromcart
     try {
       const response = await axios.post(
-        "http://localhost:3003/removefromcart",
+        `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/cart/removefromcart`,
         {
           productId: productId, // Body theo yêu cầu
         },

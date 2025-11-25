@@ -1,5 +1,5 @@
 "use client";
-
+// export const runtime = "edge";
 import React, { useEffect, useState } from "react"; // <-- SỬA LỖI: Thêm 'React'
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
@@ -270,7 +270,7 @@ export default function CheckoutPage() {
 
         // --- SỬA ĐỔI: Lấy response
         const createOrderResponse = await axios.get(
-          "http://localhost:3005/creatoreder",
+          `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/orders/creatoreder`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -296,7 +296,7 @@ export default function CheckoutPage() {
             attempts++;
             // --- SỬA ĐỔI: Thêm orderId vào URL (Vẫn giữ nguyên)
             const pollResponse = await axios.get(
-              `http://localhost:3005/checkout/${orderId}`,
+              `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/orders/checkout/${orderId}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
 
