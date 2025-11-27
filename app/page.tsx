@@ -539,7 +539,7 @@ export default function HomePage() {
         console.log("Dang fetch voi axios (Có header Auth)");
 
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/products`, // Gọi qua Nginx Gateway
+          `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/products/`, // Gọi qua Nginx Gateway
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {}, // Gửi header nếu có token
           }
