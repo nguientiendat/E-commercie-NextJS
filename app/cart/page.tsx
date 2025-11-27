@@ -246,7 +246,7 @@ export default function CartPage() {
           const detailPromises = cartData.items.map((item: ApiCartItem) => {
             return axios.get(
               // Gọi API chi tiết (giống như trang product-page)
-              `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/product/getdetailproduct/${item.productId}`,
+              `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/products/getdetailproduct/${item.productId}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
           });
