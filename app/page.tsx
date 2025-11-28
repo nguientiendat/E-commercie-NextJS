@@ -671,7 +671,7 @@ export default function HomePage() {
                   {sortedProducts.map((product) => (
                     // Bọc ProductCard bằng thẻ <a> (dùng 'a' thay 'Link')
                     <a
-                      href={`/product/${product.id}`}
+                      href={`/product?id=${product.id}`}
                       key={product.id}
                       className="group"
                     >
