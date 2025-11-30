@@ -544,7 +544,7 @@ export default function CartPage() {
                   <span>Subtotal</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-gray-700">
+                {/* <div className="flex justify-between text-gray-700">
                   <span>Shipping</span>
                   <span
                     className={
@@ -553,17 +553,17 @@ export default function CartPage() {
                   >
                     {shipping === 0 ? "FREE" : `${formatCurrency(shipping)}`}
                   </span>
-                </div>
-                <div className="flex justify-between text-gray-700">
+                </div> */}
+                {/* <div className="flex justify-between text-gray-700">
                   <span>Tax (8%)</span>
                   <span>{formatCurrency(tax)}</span>
-                </div>
+                </div> */}
               </div>
 
               <div className="flex justify-between mb-6 text-lg">
                 <span className="font-semibold text-gray-900">Total</span>
                 <span className="font-bold text-black">
-                  {formatCurrency(total)}
+                  {formatCurrency(subtotal)}
                 </span>
               </div>
 
