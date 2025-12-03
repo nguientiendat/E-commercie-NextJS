@@ -100,22 +100,26 @@ export function RegisterForm() {
         }
       );
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Registration failed");
+        throw new Error(data.message || "Registration failed");
+      }
+
+      // Lưu token và thông tin user để tự động đăng nhập
+      if (data.data?.token) {
+        localStorage.setItem("accessToken", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
       }
 
       toast({
         title: "Account Created",
-        description:
-          "Your account has been created successfully! Redirecting to login...",
+        description: "Registration successful! Logging you in...",
       });
 
-      // Simulate navigation
+      // Chuyển hướng về trang chính
       setTimeout(() => {
-        console.log("Redirecting to /login");
-        // Trong môi trường Next.js thật, bạn sẽ dùng router.push("/login")
-        // Ở đây chúng ta chỉ log ra console để demo
+        window.location.href = "https://nguientiendat.online";
       }, 1500);
     } catch (error: any) {
       console.error("Registration error:", error);
