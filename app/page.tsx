@@ -267,10 +267,10 @@ function ProductFilter({
 }: ProductFilterProps) {
   const categories = [
     { id: "all", name: "All Products" },
-    { id: "audio", name: "Audio" },
-    { id: "cables", name: "Cables & Adapters" },
-    { id: "accessories", name: "Accessories" },
-    { id: "storage", name: "Storage" },
+    { id: "audio", name: "Study" },
+    { id: "cables", name: "Ai" },
+    { id: "accessories", name: "Entertainment" },
+    { id: "storage", name: "Game& Steam" },
   ];
   const sorts = [
     { id: "featured", name: "Featured" },
