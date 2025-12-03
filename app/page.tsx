@@ -498,7 +498,7 @@ export function Navbar() {
                     Login
                   </Button>
                 </a>
-                <a href="/signup">
+                <a href="/register">
                   <Button size="sm">Sign Up</Button>
                 </a>
               </div>
