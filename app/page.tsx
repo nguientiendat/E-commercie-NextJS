@@ -332,6 +332,93 @@ interface NavbarAuthData {
   token: string;
 }
 
+// export function Navbar() {
+//   const [authInfo, setAuthInfo] = useState<{ email: string } | null>(null);
+//   const [cartCount, setCartCount] = useState(0);
+
+//   useEffect(() => {
+//     try {
+//       const storedData = localStorage.getItem("authData");
+//       if (storedData) {
+//         const authData: NavbarAuthData = JSON.parse(storedData);
+//         if (authData.user && authData.user.email) {
+//           setAuthInfo({ email: authData.user.email });
+//         }
+//       }
+//       const storedCartCount = localStorage.getItem("cartCount");
+//       if (storedCartCount) {
+//         setCartCount(parseInt(storedCartCount, 10));
+//       }
+//     } catch (error) {
+//       console.error("Failed to parse authData in Navbar:", error);
+//       localStorage.removeItem("authData");
+//     }
+//   }, []);
+
+//   const handleLogout = () => {
+//     localStorage.removeItem("authData");
+//     localStorage.removeItem("cartCount");
+//     setAuthInfo(null);
+//     window.location.reload();
+//   };
+
+//   return (
+//     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
+//       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+//         <div className="flex items-center justify-between h-16">
+//           <a href="/" className="flex-shrink-0">
+//             <span className="text-xl font-bold text-black">MyEcom</span>
+//           </a>
+//           <div className="hidden md:flex items-center gap-8">
+//             <a href="/" className="text-gray-700 hover:text-black font-medium">
+//               Products
+//             </a>
+//           </div>
+//           <div className="flex items-center gap-4">
+//             <a href="/cart" className="relative">
+//               <ShoppingBag className="w-6 h-6 text-gray-700 hover:text-black" />
+//               {cartCount > 0 && (
+//                 <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+//                   {cartCount}
+//                 </span>
+//               )}
+//             </a>
+//             {authInfo ? (
+//               <>
+//                 <a
+//                   href="/profile"
+//                   className="flex items-center gap-2 text-gray-700 hover:text-black"
+//                 >
+//                   <User className="w-6 h-6" />
+//                   <span className="text-sm font-medium hidden sm:block truncate max-w-xs">
+//                     {authInfo.email}
+//                   </span>
+//                 </a>
+//                 <Button
+//                   variant="outline"
+//                   size="sm"
+//                   onClick={handleLogout}
+//                   className="gap-2 bg-transparent"
+//                 >
+//                   <LogOut className="w-4 h-4" />
+//                   Logout
+//                 </Button>
+//               </>
+//             ) : (
+//               <a href="/login">
+//                 <Button size="sm">Login</Button>
+//               </a>
+//             )}
+//           </div>
+//         </div>
+//       </div>
+//     </nav>
+//   );
+// }
+// --- KẾT THÚC COMPONENT Navbar ---
+
+// --- ĐỊNH NGHĨA INTERFACE DỮ LIỆU ---
+
 export function Navbar() {
   const [authInfo, setAuthInfo] = useState<{ email: string } | null>(null);
   const [cartCount, setCartCount] = useState(0);
@@ -405,9 +492,16 @@ export function Navbar() {
                 </Button>
               </>
             ) : (
-              <a href="/login">
-                <Button size="sm">Login</Button>
-              </a>
+              <div className="flex items-center gap-2">
+                <a href="/login">
+                  <Button variant="outline" size="sm">
+                    Login
+                  </Button>
+                </a>
+                <a href="/signup">
+                  <Button size="sm">Sign Up</Button>
+                </a>
+              </div>
             )}
           </div>
         </div>
@@ -415,9 +509,7 @@ export function Navbar() {
     </nav>
   );
 }
-// --- KẾT THÚC COMPONENT Navbar ---
 
-// --- ĐỊNH NGHĨA INTERFACE DỮ LIỆU ---
 interface ApiProduct {
   _id: string;
   name: string;
