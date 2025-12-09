@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+// Import useRouter để chuyển hướng nếu chưa đăng nhập
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -25,11 +27,11 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Loader2,
-  LucideIcon, // Import kiểu dữ liệu cho Icon
+  LucideIcon,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 
-// --- 1. ĐỊNH NGHĨA KIỂU DỮ LIỆU (INTERFACES) ---
+// --- 1. ĐỊNH NGHĨA KIỂU DỮ LIỆU ---
 interface RevenueItem {
   month: string;
   revenue: number;
@@ -57,10 +59,9 @@ interface DashboardData {
   metrics: MetricItem[];
 }
 
+// Cập nhật đúng Endpoint theo yêu cầu
 const API_URL = "https://api.nguientiendat.online/api/analytics/dashboard";
 
-// --- 2. KHẮC PHỤC LỖI ICON MAP ---
-// Khai báo rõ ràng: Object này có key là string, value là LucideIcon
 const iconMap: Record<string, LucideIcon> = {
   "Total Revenue": DollarSign,
   "Total Orders": ShoppingCart,
@@ -69,10 +70,9 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter(); // Hook để redirect
   const [timeRange, setTimeRange] = useState("6m");
 
-  // --- 3. KHẮC PHỤC LỖI TYPE 'NEVER' ---
-  // Nói rõ cho useState biết: state này tuân theo kiểu 'DashboardData'
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     revenueData: [],
     topProducts: [],
@@ -80,34 +80,88 @@ export default function DashboardPage() {
   });
 
   const [isLoading, setIsLoading] = useState(true);
-
-  // --- 4. KHẮC PHỤC LỖI SET ERROR ---
-  // Nói rõ: state này có thể là 'string' HOẶC 'null'
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(API_URL);
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch dashboard data");
+        // --- BƯỚC 1: LẤY TOKEN TỪ LOCAL STORAGE ---
+        // Cần kiểm tra window vì Next.js render server-side
+        if (typeof window === "undefined") return;
+
+        const storedAuthData = localStorage.getItem("authData");
+
+        if (!storedAuthData) {
+          throw new Error("Bạn chưa đăng nhập (Không tìm thấy authData).");
         }
 
-        const data: DashboardData = await response.json(); // Ép kiểu dữ liệu trả về
-        setDashboardData(data);
-      } catch (err) {
+        let token = "";
+        let userRole = "";
+
+        try {
+          const parsedData = JSON.parse(storedAuthData);
+          // Theo cấu trúc bạn đưa: {"user":{...}, "token": "..."}
+          token = parsedData.token;
+          userRole = parsedData.user?.role;
+        } catch (e) {
+          throw new Error("Dữ liệu đăng nhập bị lỗi.");
+        }
+
+        if (!token) {
+          throw new Error("Token không hợp lệ.");
+        }
+
+        // --- BƯỚC 2: GỌI API VỚI METHOD POST & HEADER ---
+        const response = await fetch(API_URL, {
+          method: "POST", // Theo yêu cầu của bạn
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Gửi Token chuẩn JWT
+            // Nếu API Gateway cần header role riêng thì bỏ comment dòng dưới:
+            // "x-role": userRole
+          },
+          body: JSON.stringify({
+            // Nếu Backend cần body gì thì thêm vào đây, ví dụ timeRange
+            timeRange: timeRange,
+          }),
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          // Nếu token hết hạn hoặc không có quyền -> Redirect về login
+          router.push("/auth/login");
+          throw new Error(
+            "Phiên đăng nhập hết hạn hoặc không có quyền truy cập."
+          );
+        }
+
+        if (!response.ok) {
+          throw new Error(`Lỗi server: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // Kiểm tra cấu trúc trả về (nếu backend bọc trong field success)
+        // Nếu backend trả về { success: true, revenueData: [...], ... }
+        if (data.revenueData) {
+          setDashboardData(data);
+        } else {
+          // Fallback nếu cấu trúc khác
+          setDashboardData(data.data || data);
+        }
+      } catch (err: any) {
         console.error("Error fetching data:", err);
-        // Bây giờ bạn có thể set string thoải mái
-        setError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
+        setError(err.message || "Không thể tải dữ liệu.");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [timeRange, router]); // Thêm timeRange để reload khi đổi filter
+
+  // --- RENDERING (GIỮ NGUYÊN) ---
 
   if (isLoading) {
     return (
@@ -127,8 +181,14 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center text-red-500">
-          {error}
+        <div className="flex-1 flex flex-col items-center justify-center text-red-500 gap-4">
+          <p>{error}</p>
+          <button
+            onClick={() => router.push("/auth/login")}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:opacity-90"
+          >
+            Quay lại trang đăng nhập
+          </button>
         </div>
       </div>
     );
@@ -172,8 +232,6 @@ export default function DashboardPage() {
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {dashboardData.metrics.map((metric) => {
-            // TypeScript giờ đã hiểu metric có title là string
-            // iconMap cũng đã được định nghĩa kiểu Record<string, LucideIcon>
             const Icon = iconMap[metric.title] || TrendingUp;
 
             return (
