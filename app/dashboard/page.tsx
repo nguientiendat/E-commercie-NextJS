@@ -57,7 +57,7 @@ interface DashboardData {
   metrics: MetricItem[];
 }
 
-const API_URL = "https://api.nguientiendat.online/api/analytics";
+const API_URL = "https://api.nguientiendat.online/api/analytics/dashboard";
 
 // --- 2. KHẮC PHỤC LỖI ICON MAP ---
 // Khai báo rõ ràng: Object này có key là string, value là LucideIcon
