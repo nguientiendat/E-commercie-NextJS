@@ -28,6 +28,7 @@ import {
   ArrowDownRight,
   Loader2,
   LucideIcon,
+  Package,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 
@@ -208,7 +209,17 @@ export default function DashboardPage() {
                 Welcome back! Here&apos;s your sales performance
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              {/* Button Quản lý sản phẩm */}
+              <a
+                href="https://nguientiendat.online/admin/products"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded font-medium hover:opacity-90 transition flex items-center gap-2"
+              >
+                <Package className="h-4 w-4" />
+                Quản lý sản phẩm
+              </a>
+
+              {/* Time Range Buttons */}
               {["1m", "3m", "6m", "1y"].map((range) => (
                 <button
                   key={range}
