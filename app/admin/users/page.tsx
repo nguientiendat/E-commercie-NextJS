@@ -17,7 +17,7 @@ import { UserModal } from "@/components/admin/user-modal";
 import { UserDeleteConfirmation } from "@/components/admin/user-delete-confirmation";
 import { UserDeactivateConfirmation } from "@/components/admin/user-deactivate-confirmation";
 
-// 1. Interface cho UI (Giữ nguyên để không vỡ giao diện)
+// 1. Interface cho UI (Giữ nguyên)
 interface User {
   id: string;
   name: string;
@@ -32,16 +32,17 @@ interface User {
   role?: string;
 }
 
-// 2. Interface khớp với JSON thực tế bạn gửi
+// 2. Interface khớp với JSON thực tế mới nhất
 interface ApiUserResponse {
   _id: string;
   username: string;
   email: string;
-  role: string;
   phoneNumber?: string;
-  status?: string;
-  // createdAt đang thiếu trong JSON, để optional
-  createdAt?: string;
+  totalSpent?: number;
+  purcharsedProducts?: any[]; // Lưu ý: API đang viết sai chính tả "purcharsed"
+  role?: string; // JSON mới không thấy field này, để optional
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function AdminUsersPage() {
@@ -87,7 +88,7 @@ export default function AdminUsersPage() {
 
         // 2. Gọi API
         const response = await fetch(
-          "https://api.nguientiendat.online/api/auth/allusers",
+          "https://api.nguientiendat.online/api/user/allusers",
           {
             method: "GET",
             headers: {
@@ -109,8 +110,8 @@ export default function AdminUsersPage() {
 
         const rawData = await response.json();
 
-        // 3. TRÍCH XUẤT DỮ LIỆU TỪ CẤU TRÚC JSON CỦA BẠN
-        // JSON: { success: true, data: { users: [...] } }
+        // 3. TRÍCH XUẤT DỮ LIỆU
+        // JSON Structure: { success: true, data: { users: [...] } }
         const userList: ApiUserResponse[] = rawData.data?.users || [];
 
         // 4. MAP DỮ LIỆU
@@ -118,28 +119,28 @@ export default function AdminUsersPage() {
           id: u._id,
           name: u.username || "No Name",
           email: u.email,
-          phone: u.phoneNumber || "N/A",
-          address: "N/A", // JSON chưa có address -> để N/A
+          // Xử lý phoneNumber: API trả về "user" hoặc số điện thoại
+          phone: u.phoneNumber === "user" ? "N/A" : u.phoneNumber || "N/A",
 
-          // JSON chưa có createdAt -> Tạm lấy ngày hiện tại (nên fix backend sau)
+          address: "N/A", // API chưa có address
+
           joinDate: u.createdAt
             ? new Date(u.createdAt).toISOString().split("T")[0]
             : new Date().toISOString().split("T")[0],
 
-          totalOrders: 0, // Mock
-          totalSpent: 0, // Mock
+          // Tính tổng đơn hàng dựa trên độ dài mảng sản phẩm đã mua
+          totalOrders: u.purcharsedProducts?.length || 0,
 
-          // Map status từ API ("active") sang UI
-          // Nếu API trả về gì lạ thì fallback về 'active'
-          status:
-            u.status === "active" ||
-            u.status === "inactive" ||
-            u.status === "suspended"
-              ? u.status
-              : "active",
+          // Lấy tổng chi tiêu thực tế từ API
+          totalSpent: u.totalSpent || 0,
+
+          // API hiện tại chưa trả về status, mặc định là active
+          status: "active",
 
           deleted: false,
-          role: u.role,
+
+          // API hiện tại chưa trả về role, mặc định là USER nếu không có
+          role: u.role || "USER",
         }));
 
         setUsers(formattedUsers);
@@ -215,7 +216,7 @@ export default function AdminUsersPage() {
   ).length;
   const inactiveCount = users.filter(
     (u) => u.status !== "active" && !u.deleted
-  ).length; // Tính inactive + suspended
+  ).length;
   const totalRevenue = users.reduce((sum, u) => sum + u.totalSpent, 0);
 
   // --- RENDER ---
@@ -307,17 +308,17 @@ export default function AdminUsersPage() {
             </div>
           </Card>
           <Card className="bg-white border-slate-300 p-4">
-            <div className="text-slate-600 text-sm mb-1">Inactive Users</div>
+            <div className="text-slate-600 text-sm mb-1">
+              Inactive/Suspended
+            </div>
             <div className="text-2xl font-bold text-orange-600">
               {inactiveCount}
             </div>
           </Card>
           <Card className="bg-white border-slate-300 p-4">
-            <div className="text-slate-600 text-sm mb-1">
-              Total Revenue (Est.)
-            </div>
+            <div className="text-slate-600 text-sm mb-1">Total Revenue</div>
             <div className="text-2xl font-bold text-blue-600">
-              ${totalRevenue.toFixed(2)}
+              ${totalRevenue.toLocaleString()}
             </div>
           </Card>
         </div>
