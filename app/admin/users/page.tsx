@@ -16,7 +16,7 @@ import { UserTable } from "@/components/admin/user-table";
 import { UserModal } from "@/components/admin/user-modal";
 import { UserDeleteConfirmation } from "@/components/admin/user-delete-confirmation";
 import { UserDeactivateConfirmation } from "@/components/admin/user-deactivate-confirmation";
-
+import { Navbar } from "@/components/navbar";
 // 1. Interface cho UI (Giữ nguyên)
 interface User {
   id: string;
@@ -251,6 +251,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-white p-6">
+      <Navbar />
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-slate-900 mb-2">
