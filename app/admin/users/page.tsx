@@ -17,7 +17,7 @@ import { UserModal } from "@/components/admin/user-modal";
 import { UserDeleteConfirmation } from "@/components/admin/user-delete-confirmation";
 import { UserDeactivateConfirmation } from "@/components/admin/user-deactivate-confirmation";
 
-// Interface này giữ nguyên để tương thích với các Component con (UserTable, UserModal...)
+// 1. Interface cho UI (Giữ nguyên để không vỡ giao diện)
 interface User {
   id: string;
   name: string;
@@ -29,20 +29,19 @@ interface User {
   totalSpent: number;
   status: "active" | "inactive" | "suspended";
   deleted: boolean;
-  role?: string; // Thêm role nếu cần hiển thị
+  role?: string;
 }
 
-// Interface cho dữ liệu trả về từ API (dựa trên cấu trúc thường gặp của Node.js/Mongo)
+// 2. Interface khớp với JSON thực tế bạn gửi
 interface ApiUserResponse {
   _id: string;
   username: string;
   email: string;
   role: string;
-  createdAt: string;
   phoneNumber?: string;
-  address?: string;
-  isActive?: boolean;
-  isDeleted?: boolean;
+  status?: string;
+  // createdAt đang thiếu trong JSON, để optional
+  createdAt?: string;
 }
 
 export default function AdminUsersPage() {
@@ -75,12 +74,12 @@ export default function AdminUsersPage() {
         setIsLoading(true);
         setError(null);
 
-        // 1. Kiểm tra Token trong LocalStorage
+        // 1. Kiểm tra Token
         if (typeof window === "undefined") return;
         const storedAuthData = localStorage.getItem("authData");
 
         if (!storedAuthData) {
-          router.push("/auth/login"); // Redirect nếu chưa đăng nhập
+          router.push("/auth/login");
           return;
         }
 
@@ -110,25 +109,35 @@ export default function AdminUsersPage() {
 
         const rawData = await response.json();
 
-        // Xử lý dữ liệu trả về (Có thể là mảng hoặc object chứa mảng)
-        const userList: ApiUserResponse[] = Array.isArray(rawData)
-          ? rawData
-          : rawData.data || rawData.users || [];
+        // 3. TRÍCH XUẤT DỮ LIỆU TỪ CẤU TRÚC JSON CỦA BẠN
+        // JSON: { success: true, data: { users: [...] } }
+        const userList: ApiUserResponse[] = rawData.data?.users || [];
 
-        // 3. Map dữ liệu từ API sang Interface User của UI
-        // Lưu ý: Các trường không có trong Auth Service (như totalOrders, totalSpent) sẽ để mặc định
+        // 4. MAP DỮ LIỆU
         const formattedUsers: User[] = userList.map((u) => ({
           id: u._id,
           name: u.username || "No Name",
           email: u.email,
-          phone: u.phoneNumber || "N/A", // Nếu API không có sđt thì để N/A
-          address: u.address || "N/A",
+          phone: u.phoneNumber || "N/A",
+          address: "N/A", // JSON chưa có address -> để N/A
+
+          // JSON chưa có createdAt -> Tạm lấy ngày hiện tại (nên fix backend sau)
           joinDate: u.createdAt
             ? new Date(u.createdAt).toISOString().split("T")[0]
             : new Date().toISOString().split("T")[0],
-          totalOrders: 0, // Dữ liệu này cần lấy từ Order Service (tạm thời để 0)
-          totalSpent: 0, // Dữ liệu này cần lấy từ Order Service (tạm thời để 0)
-          status: "active", // Logic xác định status, có thể dựa vào u.isActive
+
+          totalOrders: 0, // Mock
+          totalSpent: 0, // Mock
+
+          // Map status từ API ("active") sang UI
+          // Nếu API trả về gì lạ thì fallback về 'active'
+          status:
+            u.status === "active" ||
+            u.status === "inactive" ||
+            u.status === "suspended"
+              ? u.status
+              : "active",
+
           deleted: false,
           role: u.role,
         }));
@@ -145,7 +154,7 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, [router]);
 
-  // --- LOGIC FILTER & PAGINATION (Giữ nguyên) ---
+  // --- LOGIC FILTER & PAGINATION ---
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -164,9 +173,7 @@ export default function AdminUsersPage() {
     startIndex + itemsPerPage
   );
 
-  // --- HANDLERS (Giữ nguyên logic cập nhật state local) ---
-  // Lưu ý: Để hoàn chỉnh, các hàm này cũng cần gọi API (PUT/DELETE) lên server
-
+  // --- HANDLERS ---
   const handleAddUser = () => {
     setEditingUser(null);
     setIsModalOpen(true);
@@ -178,7 +185,6 @@ export default function AdminUsersPage() {
   };
 
   const handleSaveUser = (user: User) => {
-    // TODO: Gọi API cập nhật user tại đây
     if (editingUser) {
       setUsers(users.map((u) => (u.id === user.id ? user : u)));
     } else {
@@ -189,7 +195,6 @@ export default function AdminUsersPage() {
   };
 
   const handleDeleteUser = (user: User) => {
-    // TODO: Gọi API xóa user tại đây
     setUsers(
       users.map((u) => (u.id === user.id ? { ...u, deleted: true } : u))
     );
@@ -197,7 +202,6 @@ export default function AdminUsersPage() {
   };
 
   const handleDeactivateUser = (user: User) => {
-    // TODO: Gọi API khóa user tại đây
     const newStatus = user.status === "inactive" ? "active" : "inactive";
     setUsers(
       users.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u))
@@ -210,11 +214,11 @@ export default function AdminUsersPage() {
     (u) => u.status === "active" && !u.deleted
   ).length;
   const inactiveCount = users.filter(
-    (u) => u.status === "inactive" && !u.deleted
-  ).length;
+    (u) => u.status !== "active" && !u.deleted
+  ).length; // Tính inactive + suspended
   const totalRevenue = users.reduce((sum, u) => sum + u.totalSpent, 0);
 
-  // --- RENDER LOADING / ERROR ---
+  // --- RENDER ---
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -244,11 +248,9 @@ export default function AdminUsersPage() {
     );
   }
 
-  // --- RENDER MAIN UI ---
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-slate-900 mb-2">
             User Management
@@ -258,7 +260,6 @@ export default function AdminUsersPage() {
           </p>
         </div>
 
-        {/* Controls */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
           <div className="lg:col-span-2">
             <div className="relative">
@@ -292,7 +293,6 @@ export default function AdminUsersPage() {
           </select>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card className="bg-white border-slate-300 p-4">
             <div className="text-slate-600 text-sm mb-1">Total Users</div>
@@ -322,7 +322,6 @@ export default function AdminUsersPage() {
           </Card>
         </div>
 
-        {/* Table */}
         <Card className="bg-white border-slate-300 overflow-hidden mb-6 text-black">
           <UserTable
             users={paginatedUsers}
@@ -332,7 +331,6 @@ export default function AdminUsersPage() {
           />
         </Card>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between">
             <div className="text-slate-600 text-sm">
