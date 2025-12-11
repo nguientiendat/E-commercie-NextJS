@@ -1,7 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -10,6 +17,7 @@ import { UserModal } from "@/components/admin/user-modal";
 import { UserDeleteConfirmation } from "@/components/admin/user-delete-confirmation";
 import { UserDeactivateConfirmation } from "@/components/admin/user-deactivate-confirmation";
 
+// Interface này giữ nguyên để tương thích với các Component con (UserTable, UserModal...)
 interface User {
   id: string;
   name: string;
@@ -21,86 +29,123 @@ interface User {
   totalSpent: number;
   status: "active" | "inactive" | "suspended";
   deleted: boolean;
+  role?: string; // Thêm role nếu cần hiển thị
 }
 
-// Mock data
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john@example.com",
-    phone: "+1-555-0101",
-    address: "123 Main St, New York, NY 10001",
-    joinDate: "2024-01-15",
-    totalOrders: 12,
-    totalSpent: 1250.5,
-    status: "active",
-    deleted: false,
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane@example.com",
-    phone: "+1-555-0102",
-    address: "456 Oak Ave, Los Angeles, CA 90001",
-    joinDate: "2024-02-20",
-    totalOrders: 8,
-    totalSpent: 890.25,
-    status: "active",
-    deleted: false,
-  },
-  {
-    id: "3",
-    name: "Michael Johnson",
-    email: "michael@example.com",
-    phone: "+1-555-0103",
-    address: "789 Pine Rd, Chicago, IL 60601",
-    joinDate: "2024-01-10",
-    totalOrders: 25,
-    totalSpent: 3450.0,
-    status: "active",
-    deleted: false,
-  },
-  {
-    id: "4",
-    name: "Sarah Williams",
-    email: "sarah@example.com",
-    phone: "+1-555-0104",
-    address: "321 Elm St, Houston, TX 77001",
-    joinDate: "2024-03-05",
-    totalOrders: 3,
-    totalSpent: 250.75,
-    status: "inactive",
-    deleted: false,
-  },
-  {
-    id: "5",
-    name: "Robert Brown",
-    email: "robert@example.com",
-    phone: "+1-555-0105",
-    address: "654 Maple Dr, Phoenix, AZ 85001",
-    joinDate: "2023-12-01",
-    totalOrders: 45,
-    totalSpent: 7890.0,
-    status: "suspended",
-    deleted: false,
-  },
-];
+// Interface cho dữ liệu trả về từ API (dựa trên cấu trúc thường gặp của Node.js/Mongo)
+interface ApiUserResponse {
+  _id: string;
+  username: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  phoneNumber?: string;
+  address?: string;
+  isActive?: boolean;
+  isDeleted?: boolean;
+}
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const router = useRouter();
+
+  // States
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<
     "all" | "active" | "inactive" | "suspended"
   >("all");
+
+  // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
   const [deactivateConfirm, setDeactivateConfirm] = useState<User | null>(null);
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Filter and search logic
+  // --- FETCH DATA TỪ API ---
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // 1. Kiểm tra Token trong LocalStorage
+        if (typeof window === "undefined") return;
+        const storedAuthData = localStorage.getItem("authData");
+
+        if (!storedAuthData) {
+          router.push("/auth/login"); // Redirect nếu chưa đăng nhập
+          return;
+        }
+
+        const { token } = JSON.parse(storedAuthData);
+
+        // 2. Gọi API
+        const response = await fetch(
+          "https://api.nguientiendat.online/api/auth/allusers",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("authData");
+          router.push("/auth/login");
+          throw new Error("Phiên đăng nhập hết hạn.");
+        }
+
+        if (!response.ok) {
+          throw new Error("Không thể tải danh sách người dùng.");
+        }
+
+        const rawData = await response.json();
+
+        // Xử lý dữ liệu trả về (Có thể là mảng hoặc object chứa mảng)
+        const userList: ApiUserResponse[] = Array.isArray(rawData)
+          ? rawData
+          : rawData.data || rawData.users || [];
+
+        // 3. Map dữ liệu từ API sang Interface User của UI
+        // Lưu ý: Các trường không có trong Auth Service (như totalOrders, totalSpent) sẽ để mặc định
+        const formattedUsers: User[] = userList.map((u) => ({
+          id: u._id,
+          name: u.username || "No Name",
+          email: u.email,
+          phone: u.phoneNumber || "N/A", // Nếu API không có sđt thì để N/A
+          address: u.address || "N/A",
+          joinDate: u.createdAt
+            ? new Date(u.createdAt).toISOString().split("T")[0]
+            : new Date().toISOString().split("T")[0],
+          totalOrders: 0, // Dữ liệu này cần lấy từ Order Service (tạm thời để 0)
+          totalSpent: 0, // Dữ liệu này cần lấy từ Order Service (tạm thời để 0)
+          status: "active", // Logic xác định status, có thể dựa vào u.isActive
+          deleted: false,
+          role: u.role,
+        }));
+
+        setUsers(formattedUsers);
+      } catch (err: any) {
+        console.error("Error fetching users:", err);
+        setError(err.message || "Đã xảy ra lỗi kết nối.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [router]);
+
+  // --- LOGIC FILTER & PAGINATION (Giữ nguyên) ---
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -112,13 +157,15 @@ export default function AdminUsersPage() {
     return matchesSearch && matchesStatus && !user.deleted;
   });
 
-  // Pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedUsers = filteredUsers.slice(
     startIndex,
     startIndex + itemsPerPage
   );
+
+  // --- HANDLERS (Giữ nguyên logic cập nhật state local) ---
+  // Lưu ý: Để hoàn chỉnh, các hàm này cũng cần gọi API (PUT/DELETE) lên server
 
   const handleAddUser = () => {
     setEditingUser(null);
@@ -131,6 +178,7 @@ export default function AdminUsersPage() {
   };
 
   const handleSaveUser = (user: User) => {
+    // TODO: Gọi API cập nhật user tại đây
     if (editingUser) {
       setUsers(users.map((u) => (u.id === user.id ? user : u)));
     } else {
@@ -141,6 +189,7 @@ export default function AdminUsersPage() {
   };
 
   const handleDeleteUser = (user: User) => {
+    // TODO: Gọi API xóa user tại đây
     setUsers(
       users.map((u) => (u.id === user.id ? { ...u, deleted: true } : u))
     );
@@ -148,6 +197,7 @@ export default function AdminUsersPage() {
   };
 
   const handleDeactivateUser = (user: User) => {
+    // TODO: Gọi API khóa user tại đây
     const newStatus = user.status === "inactive" ? "active" : "inactive";
     setUsers(
       users.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u))
@@ -162,11 +212,39 @@ export default function AdminUsersPage() {
   const inactiveCount = users.filter(
     (u) => u.status === "inactive" && !u.deleted
   ).length;
-  const suspendedCount = users.filter(
-    (u) => u.status === "suspended" && !u.deleted
-  ).length;
   const totalRevenue = users.reduce((sum, u) => sum + u.totalSpent, 0);
 
+  // --- RENDER LOADING / ERROR ---
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <p className="text-slate-500">Đang tải dữ liệu người dùng...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center text-red-500">
+          <AlertCircle className="h-10 w-10 mx-auto mb-2" />
+          <p>{error}</p>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => window.location.reload()}
+          >
+            Thử lại
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- RENDER MAIN UI ---
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -235,7 +313,9 @@ export default function AdminUsersPage() {
             </div>
           </Card>
           <Card className="bg-white border-slate-300 p-4">
-            <div className="text-slate-600 text-sm mb-1">Total Revenue</div>
+            <div className="text-slate-600 text-sm mb-1">
+              Total Revenue (Est.)
+            </div>
             <div className="text-2xl font-bold text-blue-600">
               ${totalRevenue.toFixed(2)}
             </div>
@@ -243,7 +323,7 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Table */}
-        <Card className="bg-white border-slate-300 overflow-hidden mb-6">
+        <Card className="bg-white border-slate-300 overflow-hidden mb-6 text-black">
           <UserTable
             users={paginatedUsers}
             onEdit={handleEditUser}
