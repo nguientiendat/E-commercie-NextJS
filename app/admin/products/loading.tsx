@@ -1,4 +1,7 @@
-// export const runtime = "edge";
 export default function Loading() {
-  return null;
+  return (
+    <div className="p-4">
+      <p>Loading users...</p>
+    </div>
+  );
 }
