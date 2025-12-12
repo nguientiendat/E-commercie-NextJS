@@ -6,8 +6,7 @@ import { X, UploadCloud } from "lucide-react";
 
 // --- 1. IMPORT REACT QUILL & DYNAMIC ---
 import dynamic from "next/dynamic";
-import "react-quill/dist/quill.snow.css"; // Import CSS của Quill
-
+import "react-quill-new/dist/quill.snow.css";
 // Import Dynamic để tắt SSR cho Quill (Tránh lỗi document is not defined)
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 // --- COMPONENT MẪU VÀ HÀM HỖ TRỢ ---
