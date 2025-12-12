@@ -1,13 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios"; // <-- Import
+import React, { useState, useCallback } from "react";
+import axios from "axios";
 import { X, UploadCloud } from "lucide-react";
 
-// --- COMPONENT MẪU VÀ HÀM HỖ TRỢ ---
-// (Các component này được định nghĩa ở đây để tránh lỗi 'Could not resolve')
+// --- 1. IMPORT REACT QUILL & DYNAMIC ---
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css"; // Import CSS của Quill
 
-// Mock useToast
+// Import Dynamic để tắt SSR cho Quill (Tránh lỗi document is not defined)
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+
+// --- COMPONENT MẪU VÀ HÀM HỖ TRỢ ---
+
 const useToast = () => {
   const toast = useCallback(
     ({
@@ -29,23 +34,20 @@ const useToast = () => {
   return { toast };
 };
 
-// Component Mẫu: Button
 export function Button({
   children,
   onClick,
   className,
   variant,
-  size,
   disabled,
-  type, // <-- SỬA LỖI: Thêm 'type' prop
+  type,
 }: {
   children: React.ReactNode;
   onClick?: (e?: React.MouseEvent) => void;
   className?: string;
   variant?: string;
-  size?: string;
   disabled?: boolean;
-  type?: "button" | "submit" | "reset"; // <-- SỬA LỖI: Định nghĩa 'type'
+  type?: "button" | "submit" | "reset";
 }) {
   const baseStyle =
     "px-4 py-2 rounded-lg font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center gap-2";
@@ -54,10 +56,10 @@ export function Button({
       ? "bg-transparent border border-gray-300 text-gray-900 hover:bg-gray-50"
       : variant === "destructive"
       ? "bg-red-600 text-white hover:bg-red-700"
-      : "bg-black text-white hover:bg-gray-800 disabled:opacity-50";
+      : "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"; // Sửa lại màu xanh cho đẹp
   return (
     <button
-      type={type || "button"} // <-- SỬA LỖI: Áp dụng 'type', mặc định là "button"
+      type={type || "button"}
       onClick={onClick}
       disabled={disabled}
       className={`${baseStyle} ${variantStyle} ${className || ""}`}
@@ -67,7 +69,6 @@ export function Button({
   );
 }
 
-// Component MẪu: Card
 export function Card({
   children,
   className,
@@ -86,7 +87,6 @@ export function Card({
   );
 }
 
-// Component MẪu: Input
 export function Input({
   type,
   name,
@@ -100,8 +100,8 @@ export function Input({
   max,
 }: {
   type: string;
-  name?: string; // name là optional cho type='file'
-  value?: string | number; // value là optional cho type='file'
+  name?: string;
+  value?: string | number;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   required?: boolean;
   placeholder?: string;
@@ -128,8 +128,6 @@ export function Input({
   );
 }
 
-// --- KẾT THÚC COMPONENT MẪU ---
-
 // --- INTERFACES ---
 interface AuthData {
   user: {
@@ -139,7 +137,6 @@ interface AuthData {
   token: string;
 }
 
-// Interface Product từ props
 interface Product {
   id: string;
   name: string;
@@ -165,7 +162,7 @@ interface ProductModalProps {
 
 // --- COMPONENT MODAL CHÍNH ---
 export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
-  // Trạng thái cho các trường form
+  // State form
   const [formData, setFormData] = useState({
     name: product?.name || "",
     price: product?.price || 0,
@@ -173,15 +170,32 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
     discount: product?.discount || 0,
     sold_count: product?.sold_count || 0,
     days_valid: product?.days_valid || 365,
-    description: product?.description || "",
+    description: product?.description || "", // Field này sẽ chứa HTML String
     frequently_asked_questions: product?.frequently_asked_questions || "",
   });
 
-  // State MỚI
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
+  // --- 2. CẤU HÌNH TOOLBAR CHO EDITOR ---
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["link", "image"],
+      ["clean"],
+    ],
+  };
+
+  // --- 3. HANDLER RIÊNG CHO DESCRIPTION (REACT QUILL) ---
+  // Quill trả về string HTML trực tiếp, không phải event
+  const handleDescriptionChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, description: value }));
+  };
+
+  // Handler cho các input thường
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -205,12 +219,10 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
     }
   };
 
-  // --- HÀM SUBMIT ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (product) {
-      // Logic "Edit" (chưa làm)
       toast({
         title: "Update Logic Needed",
         description: "Update API logic has not been implemented yet.",
@@ -219,10 +231,8 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
       return;
     }
 
-    // --- LOGIC TẠO MỚI (CREATE) ---
     setIsUploading(true);
 
-    // 1. Kiểm tra file ảnh
     if (!imageFile) {
       toast({
         title: "Image Required",
@@ -233,7 +243,6 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
       return;
     }
 
-    // 2. Lấy token
     let token: string | null = null;
     try {
       const storedData = localStorage.getItem("authData");
@@ -251,33 +260,29 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
     }
 
     try {
-      // --- BƯỚC 1: TẠO FORMDATA ---
       const formDataApi = new FormData();
-
-      // --- BƯỚC 2: APPEND CÁC TRƯỜNG DỮ LIỆU ---
       formDataApi.append("name", formData.name);
       formDataApi.append("price", formData.price.toString());
       formDataApi.append("quantity", formData.quantity.toString());
       formDataApi.append("discount", formData.discount.toString());
       formDataApi.append("sold_count", formData.sold_count.toString());
       formDataApi.append("days_valid", formData.days_valid.toString());
+
+      // Gửi chuỗi HTML Description lên Server
       formDataApi.append("description", formData.description);
+
       formDataApi.append(
         "frequently_asked_questions",
         formData.frequently_asked_questions
       );
-
-      // --- BƯỚC 3: APPEND FILE ẢNH ---
       formDataApi.append("avatar_url", imageFile);
 
-      // --- BƯỚC 4: GỌI API BACKEND ---
       const backendResponse = await axios.post(
         `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/products/addproduct`,
-        formDataApi, // Gửi FormData
+        formDataApi,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            // 'Content-Type' sẽ được axios tự động đặt là 'multipart/form-data'
           },
         }
       );
@@ -400,7 +405,7 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
               />
             </div>
 
-            {/* Số lượng đã bán (Sold Count) */}
+            {/* Sold Count */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Sold Count (Initial)
@@ -416,7 +421,7 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
               />
             </div>
 
-            {/* Ngày hiệu lực */}
+            {/* Days Valid */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Days Valid
@@ -433,7 +438,7 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
             </div>
           </div>
 
-          {/* --- Input tải ảnh --- */}
+          {/* Upload Image */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
               Product Image (avatar_url) *
@@ -455,29 +460,33 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
                 </div>
                 <input
                   type="file"
-                  name="avatar_url" // <-- Key cho BE
+                  name="avatar_url"
                   className="hidden"
                   onChange={handleImageChange}
                   accept="image/png, image/jpeg, image/webp"
-                  required={!product} // Chỉ bắt buộc khi tạo mới
+                  required={!product}
                 />
               </label>
             </div>
           </div>
 
-          {/* Mô tả */}
+          {/* --- 4. DESCRIPTION VỚI REACT QUILL --- */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Description
+              Description (Rich Text)
             </label>
-            <textarea
-              name="description"
-              value={formData.description || ""}
-              onChange={handleInputChange}
-              placeholder="Enter product description"
-              rows={3}
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-white placeholder:text-slate-500 rounded-lg focus:outline-none focus:border-blue-500"
-            />
+            {/* Wrapper div này để chỉnh style cho editor */}
+            {/* bg-white: Để nền trắng cho dễ soạn thảo (vì Modal đang tối màu) */}
+            {/* text-black: Để chữ màu đen */}
+            <div className="bg-white text-black rounded-lg overflow-hidden">
+              <ReactQuill
+                theme="snow"
+                value={formData.description}
+                onChange={handleDescriptionChange}
+                modules={modules}
+                className="h-64 mb-12" // mb-12 để tạo khoảng trống cho toolbar trên mobile
+              />
+            </div>
           </div>
 
           {/* FAQ */}
@@ -487,7 +496,7 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
             </label>
             <textarea
               name="frequently_asked_questions"
-              value={formData.frequently_asked_questions || ""}
+              value={formData.frequently_asked_questions}
               onChange={handleInputChange}
               placeholder="Enter FAQ for this product"
               rows={3}
@@ -495,10 +504,10 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
             />
           </div>
 
-          {/* Nút Submit */}
+          {/* Buttons */}
           <div className="flex gap-3 pt-4">
             <Button
-              type="submit" // <-- SỬA LỖI: Thêm type
+              type="submit"
               className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
               disabled={isUploading}
             >
@@ -509,7 +518,7 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
                 : "Create Product"}
             </Button>
             <Button
-              type="button" // <-- SỬA LỖI: Thêm type
+              type="button"
               onClick={onClose}
               variant="outline"
               className="border-slate-600 text-slate-300 bg-transparent"
