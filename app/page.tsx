@@ -545,7 +545,7 @@ interface AuthData {
 // --- COMPONENT HERO CAROUSEL ---
 const carouselImages = [
   {
-    src: "/carousel/banner1.jpg",
+    src: "/carousel/banner1-noel.jpg",
     alt: "Chương trình khuyến mãi 1",
   },
   {
