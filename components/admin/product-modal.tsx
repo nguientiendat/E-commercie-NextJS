@@ -9,8 +9,7 @@ import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css"; // Import CSS của Quill
 
 // Import Dynamic để tắt SSR cho Quill (Tránh lỗi document is not defined)
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 // --- COMPONENT MẪU VÀ HÀM HỖ TRỢ ---
 
 const useToast = () => {
