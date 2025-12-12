@@ -16,10 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 
-// ... (Keep your existing components: Button, Card, ProductReviews, Navbar unchanged) ...
-
 // --- COMPONENT MẪU (STUBS) ---
-// (Copy lại các component Button, Card, ProductReviews, Navbar từ code cũ của bạn vào đây)
 export function Button({
   children,
   onClick,
@@ -87,111 +84,6 @@ interface NavbarAuthData {
   token: string;
 }
 
-// export function Navbar() {
-//   const [authInfo, setAuthInfo] = useState<{ email: string } | null>(null);
-//   const [cartCount, setCartCount] = useState(0);
-
-//   useEffect(() => {
-//     const handleCartUpdate = (event: Event) => {
-//       const customEvent = event as CustomEvent;
-//       if (typeof customEvent.detail.newCount === "number") {
-//         setCartCount(customEvent.detail.newCount);
-//       }
-//     };
-
-//     window.addEventListener("cartUpdated", handleCartUpdate);
-
-//     try {
-//       const storedData = localStorage.getItem("authData");
-//       if (storedData) {
-//         const authData: NavbarAuthData = JSON.parse(storedData);
-//         if (authData.user && authData.user.email) {
-//           setAuthInfo({ email: authData.user.email });
-//         }
-//       }
-
-//       const storedCartCount = localStorage.getItem("cartCount");
-//       if (storedCartCount) {
-//         setCartCount(parseInt(storedCartCount, 10));
-//       }
-//     } catch (error) {
-//       console.error("Failed to parse data from localStorage", error);
-//       localStorage.removeItem("authData");
-//       localStorage.removeItem("cartCount");
-//     }
-
-//     return () => {
-//       window.removeEventListener("cartUpdated", handleCartUpdate);
-//     };
-//   }, []);
-
-//   const handleLogout = () => {
-//     localStorage.removeItem("authData");
-//     localStorage.removeItem("cartCount");
-//     setAuthInfo(null);
-//     window.location.reload();
-//   };
-
-//   return (
-//     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
-//       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-//         <div className="flex items-center justify-between h-16">
-//           <Link href="/" className="flex-shrink-0">
-//             <span className="text-xl font-bold text-black">MyEcom</span>
-//           </Link>
-//           <div className="hidden md:flex items-center gap-8">
-//             <Link
-//               href="/"
-//               className="text-gray-700 hover:text-black font-medium"
-//             >
-//               Products
-//             </Link>
-//           </div>
-//           <div className="flex items-center gap-4">
-//             <Link href="/cart" className="relative">
-//               <ShoppingBag className="w-6 h-6 text-gray-700 hover:text-black" />
-//               {cartCount > 0 && (
-//                 <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-//                   {cartCount}
-//                 </span>
-//               )}
-//             </Link>
-//             {authInfo ? (
-//               <>
-//                 <Link
-//                   href="/profile"
-//                   className="flex items-center gap-2 text-gray-700 hover:text-black"
-//                 >
-//                   <User className="w-6 h-6" />
-//                   <span className="text-sm font-medium hidden sm:block truncate max-w-xs">
-//                     {authInfo.email}
-//                   </span>
-//                 </Link>
-//                 <Button
-//                   variant="outline"
-//                   size="sm"
-//                   onClick={handleLogout}
-//                   className="gap-2 bg-transparent"
-//                 >
-//                   <LogOut className="w-4 h-4" />
-//                   Logout
-//                 </Button>
-//               </>
-//             ) : (
-//               <Link href="/login">
-//                 <Button size="sm">Login</Button>
-//               </Link>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-//     </nav>
-//   );
-// }
-
-// --- KẾT THÚC COMPONENT MẪU ---
-
-// --- HÀM HỖ TRỢ ---
 export function Navbar() {
   const [authInfo, setAuthInfo] = useState<{ email: string } | null>(null);
   const [cartCount, setCartCount] = useState(0);
@@ -226,7 +118,6 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 bg-[#630A0E] border-b border-[#4a070a]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* 1. Logo hình ảnh */}
           <a href="/" className="flex-shrink-0 flex items-center">
             <img
               src="/carousel/logo.png"
@@ -235,7 +126,6 @@ export function Navbar() {
             />
           </a>
 
-          {/* 2. Menu chính - đổi màu chữ sang trắng */}
           <div className="hidden md:flex items-center gap-8">
             <a
               href="/"
@@ -245,13 +135,10 @@ export function Navbar() {
             </a>
           </div>
 
-          {/* 3. Khu vực bên phải */}
           <div className="flex items-center gap-4">
             <a href="/cart" className="relative">
-              {/* Icon giỏ hàng màu trắng */}
               <ShoppingBag className="w-6 h-6 text-gray-200 hover:text-white transition-colors" />
               {cartCount > 0 && (
-                // Badge số lượng: Nền trắng, chữ đỏ
                 <span className="absolute -top-2 -right-2 bg-white text-[#630A0E] text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {cartCount}
                 </span>
@@ -273,7 +160,6 @@ export function Navbar() {
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
-                  // Style nút logout cho nền tối
                   className="gap-2 bg-transparent border-gray-400 text-gray-200 hover:bg-white/10 hover:text-white hover:border-white"
                 >
                   <LogOut className="w-4 h-4" />
@@ -283,7 +169,6 @@ export function Navbar() {
             ) : (
               <div className="flex items-center gap-2">
                 <a href="/login">
-                  {/* Nút Login: Outline trắng */}
                   <Button
                     variant="outline"
                     size="sm"
@@ -293,7 +178,6 @@ export function Navbar() {
                   </Button>
                 </a>
                 <a href="/register">
-                  {/* Nút Sign Up: Nền trắng, chữ đỏ để nổi bật nhất */}
                   <Button
                     size="sm"
                     className="bg-white text-[#630A0E] hover:bg-gray-100 border-none"
@@ -309,6 +193,7 @@ export function Navbar() {
     </nav>
   );
 }
+
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -316,7 +201,6 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-// --- ĐỊNH NGHĨA INTERFACE ---
 interface AuthData {
   user: {
     email: string;
@@ -340,10 +224,9 @@ interface ApiProductDetail {
   [key: string]: any;
 }
 
-// Component con để xử lý logic lấy ID và fetch dữ liệu
 function ProductContent() {
   const searchParams = useSearchParams();
-  const id = searchParams.get("id"); // Lấy id từ URL dạng ?id=...
+  const id = searchParams.get("id");
 
   const [product, setProduct] = useState<ApiProductDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -354,7 +237,6 @@ function ProductContent() {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const { toast } = useToast();
 
-  // --- EFFECT GỌI API ---
   useEffect(() => {
     const fetchProductDetails = async () => {
       setIsLoading(true);
@@ -366,21 +248,17 @@ function ProductContent() {
         return;
       }
 
-      // 1. Lấy token
       let token: string | null = null;
       try {
         const storedData = localStorage.getItem("authData");
-        // Chúng ta cho phép xem sản phẩm mà không cần login, token là optional
         if (storedData) {
           const authData: AuthData = JSON.parse(storedData);
           token = authData.token;
         }
       } catch (error) {
         console.error("Failed to parse authData", error);
-        // Không bắt buộc login ở đây để xem sản phẩm
       }
 
-      // 2. Gọi API bằng Axios
       try {
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/products/getdetailproduct/${id}`,
@@ -428,7 +306,6 @@ function ProductContent() {
     }
   }, [id, toast]);
 
-  // --- HÀM XỬ LÝ ---
   const handleAddToCart = async () => {
     if (!product) return;
     setIsAddingToCart(true);
@@ -521,7 +398,6 @@ function ProductContent() {
     });
   };
 
-  // --- RENDER LOGIC ---
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -622,9 +498,7 @@ function ProductContent() {
               </p>
             </div>
 
-            <p className="text-gray-700 leading-relaxed">
-              {product.description || "No description available."}
-            </p>
+            {/* Short Description removed from here */}
 
             {/* Features */}
             {product.features && product.features.length > 0 && (
@@ -748,6 +622,19 @@ function ProductContent() {
               </div>
             </div>
           )}
+
+        {/* Product Description Section - NEW */}
+        {product.description && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Product Description
+            </h2>
+            <div
+              className="prose prose-sm max-w-none text-gray-700"
+              dangerouslySetInnerHTML={{ __html: product.description }}
+            />
+          </div>
+        )}
 
         {/* Reviews Section */}
         <ProductReviews />
