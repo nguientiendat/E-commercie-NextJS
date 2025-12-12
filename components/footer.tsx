@@ -15,7 +15,7 @@ export function Footer() {
           <div className="flex justify-center md:justify-start">
             <div className="w-64 h-48 relative">
               <Image
-                src="/images/528b91cfa29c7ffd85418f4b1e8cc8ce.svg"
+                src="/carousel/footer.svg"
                 alt="Account illustration"
                 fill
                 className="object-contain"
