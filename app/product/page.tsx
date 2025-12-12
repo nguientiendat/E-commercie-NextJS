@@ -87,20 +87,116 @@ interface NavbarAuthData {
   token: string;
 }
 
+// export function Navbar() {
+//   const [authInfo, setAuthInfo] = useState<{ email: string } | null>(null);
+//   const [cartCount, setCartCount] = useState(0);
+
+//   useEffect(() => {
+//     const handleCartUpdate = (event: Event) => {
+//       const customEvent = event as CustomEvent;
+//       if (typeof customEvent.detail.newCount === "number") {
+//         setCartCount(customEvent.detail.newCount);
+//       }
+//     };
+
+//     window.addEventListener("cartUpdated", handleCartUpdate);
+
+//     try {
+//       const storedData = localStorage.getItem("authData");
+//       if (storedData) {
+//         const authData: NavbarAuthData = JSON.parse(storedData);
+//         if (authData.user && authData.user.email) {
+//           setAuthInfo({ email: authData.user.email });
+//         }
+//       }
+
+//       const storedCartCount = localStorage.getItem("cartCount");
+//       if (storedCartCount) {
+//         setCartCount(parseInt(storedCartCount, 10));
+//       }
+//     } catch (error) {
+//       console.error("Failed to parse data from localStorage", error);
+//       localStorage.removeItem("authData");
+//       localStorage.removeItem("cartCount");
+//     }
+
+//     return () => {
+//       window.removeEventListener("cartUpdated", handleCartUpdate);
+//     };
+//   }, []);
+
+//   const handleLogout = () => {
+//     localStorage.removeItem("authData");
+//     localStorage.removeItem("cartCount");
+//     setAuthInfo(null);
+//     window.location.reload();
+//   };
+
+//   return (
+//     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
+//       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+//         <div className="flex items-center justify-between h-16">
+//           <Link href="/" className="flex-shrink-0">
+//             <span className="text-xl font-bold text-black">MyEcom</span>
+//           </Link>
+//           <div className="hidden md:flex items-center gap-8">
+//             <Link
+//               href="/"
+//               className="text-gray-700 hover:text-black font-medium"
+//             >
+//               Products
+//             </Link>
+//           </div>
+//           <div className="flex items-center gap-4">
+//             <Link href="/cart" className="relative">
+//               <ShoppingBag className="w-6 h-6 text-gray-700 hover:text-black" />
+//               {cartCount > 0 && (
+//                 <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+//                   {cartCount}
+//                 </span>
+//               )}
+//             </Link>
+//             {authInfo ? (
+//               <>
+//                 <Link
+//                   href="/profile"
+//                   className="flex items-center gap-2 text-gray-700 hover:text-black"
+//                 >
+//                   <User className="w-6 h-6" />
+//                   <span className="text-sm font-medium hidden sm:block truncate max-w-xs">
+//                     {authInfo.email}
+//                   </span>
+//                 </Link>
+//                 <Button
+//                   variant="outline"
+//                   size="sm"
+//                   onClick={handleLogout}
+//                   className="gap-2 bg-transparent"
+//                 >
+//                   <LogOut className="w-4 h-4" />
+//                   Logout
+//                 </Button>
+//               </>
+//             ) : (
+//               <Link href="/login">
+//                 <Button size="sm">Login</Button>
+//               </Link>
+//             )}
+//           </div>
+//         </div>
+//       </div>
+//     </nav>
+//   );
+// }
+
+// --- KẾT THÚC COMPONENT MẪU ---
+
+// --- HÀM HỖ TRỢ ---
 export function Navbar() {
   const [authInfo, setAuthInfo] = useState<{ email: string } | null>(null);
   const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
-    const handleCartUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (typeof customEvent.detail.newCount === "number") {
-        setCartCount(customEvent.detail.newCount);
-      }
-    };
-
-    window.addEventListener("cartUpdated", handleCartUpdate);
-
     try {
       const storedData = localStorage.getItem("authData");
       if (storedData) {
@@ -109,20 +205,14 @@ export function Navbar() {
           setAuthInfo({ email: authData.user.email });
         }
       }
-
       const storedCartCount = localStorage.getItem("cartCount");
       if (storedCartCount) {
         setCartCount(parseInt(storedCartCount, 10));
       }
     } catch (error) {
-      console.error("Failed to parse data from localStorage", error);
+      console.error("Failed to parse authData in Navbar:", error);
       localStorage.removeItem("authData");
-      localStorage.removeItem("cartCount");
     }
-
-    return () => {
-      window.removeEventListener("cartUpdated", handleCartUpdate);
-    };
   }, []);
 
   const handleLogout = () => {
@@ -133,54 +223,85 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <nav className="sticky top-0 z-50 bg-[#630A0E] border-b border-[#4a070a]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex-shrink-0">
-            <span className="text-xl font-bold text-black">MyEcom</span>
-          </Link>
+          {/* 1. Logo hình ảnh */}
+          <a href="/" className="flex-shrink-0 flex items-center">
+            <img
+              src="/carousel/logo.png"
+              alt="Logo"
+              className="h-10 w-auto object-contain"
+            />
+          </a>
+
+          {/* 2. Menu chính - đổi màu chữ sang trắng */}
           <div className="hidden md:flex items-center gap-8">
-            <Link
+            <a
               href="/"
-              className="text-gray-700 hover:text-black font-medium"
+              className="text-gray-200 hover:text-white font-medium transition-colors"
             >
               Products
-            </Link>
+            </a>
           </div>
+
+          {/* 3. Khu vực bên phải */}
           <div className="flex items-center gap-4">
-            <Link href="/cart" className="relative">
-              <ShoppingBag className="w-6 h-6 text-gray-700 hover:text-black" />
+            <a href="/cart" className="relative">
+              {/* Icon giỏ hàng màu trắng */}
+              <ShoppingBag className="w-6 h-6 text-gray-200 hover:text-white transition-colors" />
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                // Badge số lượng: Nền trắng, chữ đỏ
+                <span className="absolute -top-2 -right-2 bg-white text-[#630A0E] text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
-            </Link>
+            </a>
+
             {authInfo ? (
               <>
-                <Link
+                <a
                   href="/profile"
-                  className="flex items-center gap-2 text-gray-700 hover:text-black"
+                  className="flex items-center gap-2 text-gray-200 hover:text-white transition-colors"
                 >
                   <User className="w-6 h-6" />
                   <span className="text-sm font-medium hidden sm:block truncate max-w-xs">
                     {authInfo.email}
                   </span>
-                </Link>
+                </a>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
-                  className="gap-2 bg-transparent"
+                  // Style nút logout cho nền tối
+                  className="gap-2 bg-transparent border-gray-400 text-gray-200 hover:bg-white/10 hover:text-white hover:border-white"
                 >
                   <LogOut className="w-4 h-4" />
                   Logout
                 </Button>
               </>
             ) : (
-              <Link href="/login">
-                <Button size="sm">Login</Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                <a href="/login">
+                  {/* Nút Login: Outline trắng */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-transparent border-gray-400 text-gray-200 hover:bg-white/10 hover:text-white hover:border-white"
+                  >
+                    Login
+                  </Button>
+                </a>
+                <a href="/register">
+                  {/* Nút Sign Up: Nền trắng, chữ đỏ để nổi bật nhất */}
+                  <Button
+                    size="sm"
+                    className="bg-white text-[#630A0E] hover:bg-gray-100 border-none"
+                  >
+                    Sign Up
+                  </Button>
+                </a>
+              </div>
             )}
           </div>
         </div>
@@ -188,10 +309,6 @@ export function Navbar() {
     </nav>
   );
 }
-
-// --- KẾT THÚC COMPONENT MẪU ---
-
-// --- HÀM HỖ TRỢ ---
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
