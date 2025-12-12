@@ -283,6 +283,7 @@ function ProductFilter({
     <Card className="p-6 bg-white border border-gray-200 sticky top-24">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Filters</h2>
 
+      {/* Phần Sort by */}
       <div className="mb-6">
         <h3 className="font-semibold text-gray-900 mb-3">Sort by</h3>
         <div className="space-y-2">
@@ -290,9 +291,10 @@ function ProductFilter({
             <button
               key={sort.id}
               onClick={() => onSortChange(sort.id)}
-              className={`w-full text-left p-2 rounded-lg ${
+              // Đã đổi bg-black thành bg-[#630A0E]
+              className={`w-full text-left p-2 rounded-lg transition-colors ${
                 selectedSort === sort.id
-                  ? "bg-black text-white"
+                  ? "bg-[#630A0E] text-white"
                   : "hover:bg-gray-100"
               }`}
             >
@@ -302,6 +304,7 @@ function ProductFilter({
         </div>
       </div>
 
+      {/* Phần Category */}
       <div>
         <h3 className="font-semibold text-gray-900 mb-3">Category</h3>
         <div className="space-y-2">
@@ -309,9 +312,10 @@ function ProductFilter({
             <button
               key={cat.id}
               onClick={() => onCategoryChange(cat.id)}
-              className={`w-full text-left p-2 rounded-lg ${
+              // Đã đổi bg-black thành bg-[#630A0E]
+              className={`w-full text-left p-2 rounded-lg transition-colors ${
                 selectedCategory === cat.id
-                  ? "bg-black text-white"
+                  ? "bg-[#630A0E] text-white"
                   : "hover:bg-gray-100"
               }`}
             >
@@ -450,31 +454,103 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    // <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    //   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    //     <div className="flex items-center justify-between h-16">
+    //       <a href="/" className="flex-shrink-0">
+    //         <span className="text-xl font-bold text-black">MyEcom</span>
+    //       </a>
+    //       <div className="hidden md:flex items-center gap-8">
+    //         <a href="/" className="text-gray-700 hover:text-black font-medium">
+    //           Products
+    //         </a>
+    //       </div>
+    //       <div className="flex items-center gap-4">
+    //         <a href="/cart" className="relative">
+    //           <ShoppingBag className="w-6 h-6 text-gray-700 hover:text-black" />
+    //           {cartCount > 0 && (
+    //             <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+    //               {cartCount}
+    //             </span>
+    //           )}
+    //         </a>
+    //         {authInfo ? (
+    //           <>
+    //             <a
+    //               href="/profile"
+    //               className="flex items-center gap-2 text-gray-700 hover:text-black"
+    //             >
+    //               <User className="w-6 h-6" />
+    //               <span className="text-sm font-medium hidden sm:block truncate max-w-xs">
+    //                 {authInfo.email}
+    //               </span>
+    //             </a>
+    //             <Button
+    //               variant="outline"
+    //               size="sm"
+    //               onClick={handleLogout}
+    //               className="gap-2 bg-transparent"
+    //             >
+    //               <LogOut className="w-4 h-4" />
+    //               Logout
+    //             </Button>
+    //           </>
+    //         ) : (
+    //           <div className="flex items-center gap-2">
+    //             <a href="/login">
+    //               <Button variant="outline" size="sm">
+    //                 Login
+    //               </Button>
+    //             </a>
+    //             <a href="/register">
+    //               <Button size="sm">Sign Up</Button>
+    //             </a>
+    //           </div>
+    //         )}
+    //       </div>
+    //     </div>
+    //   </div>
+    // </nav>
+    <nav className="sticky top-0 z-50 bg-[#630A0E] border-b border-[#4a070a]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <a href="/" className="flex-shrink-0">
-            <span className="text-xl font-bold text-black">MyEcom</span>
+          {/* 1. Logo hình ảnh */}
+          <a href="/" className="flex-shrink-0 flex items-center">
+            <img
+              src="/carousel/logo.png"
+              alt="Logo"
+              className="h-10 w-auto object-contain"
+            />
           </a>
+
+          {/* 2. Menu chính - đổi màu chữ sang trắng */}
           <div className="hidden md:flex items-center gap-8">
-            <a href="/" className="text-gray-700 hover:text-black font-medium">
+            <a
+              href="/"
+              className="text-gray-200 hover:text-white font-medium transition-colors"
+            >
               Products
             </a>
           </div>
+
+          {/* 3. Khu vực bên phải */}
           <div className="flex items-center gap-4">
             <a href="/cart" className="relative">
-              <ShoppingBag className="w-6 h-6 text-gray-700 hover:text-black" />
+              {/* Icon giỏ hàng màu trắng */}
+              <ShoppingBag className="w-6 h-6 text-gray-200 hover:text-white transition-colors" />
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                // Badge số lượng: Nền trắng, chữ đỏ
+                <span className="absolute -top-2 -right-2 bg-white text-[#630A0E] text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
             </a>
+
             {authInfo ? (
               <>
                 <a
                   href="/profile"
-                  className="flex items-center gap-2 text-gray-700 hover:text-black"
+                  className="flex items-center gap-2 text-gray-200 hover:text-white transition-colors"
                 >
                   <User className="w-6 h-6" />
                   <span className="text-sm font-medium hidden sm:block truncate max-w-xs">
@@ -485,7 +561,8 @@ export function Navbar() {
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
-                  className="gap-2 bg-transparent"
+                  // Style nút logout cho nền tối
+                  className="gap-2 bg-transparent border-gray-400 text-gray-200 hover:bg-white/10 hover:text-white hover:border-white"
                 >
                   <LogOut className="w-4 h-4" />
                   Logout
@@ -494,12 +571,23 @@ export function Navbar() {
             ) : (
               <div className="flex items-center gap-2">
                 <a href="/login">
-                  <Button variant="outline" size="sm">
+                  {/* Nút Login: Outline trắng */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-transparent border-gray-400 text-gray-200 hover:bg-white/10 hover:text-white hover:border-white"
+                  >
                     Login
                   </Button>
                 </a>
                 <a href="/register">
-                  <Button size="sm">Sign Up</Button>
+                  {/* Nút Sign Up: Nền trắng, chữ đỏ để nổi bật nhất */}
+                  <Button
+                    size="sm"
+                    className="bg-white text-[#630A0E] hover:bg-gray-100 border-none"
+                  >
+                    Sign Up
+                  </Button>
                 </a>
               </div>
             )}
@@ -563,7 +651,7 @@ function HeroCarousel() {
 
   return (
     <section className="bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 py-5">
         <Carousel
           plugins={[plugin.current]}
           className="w-full"
