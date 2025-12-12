@@ -7,6 +7,7 @@ import "./globals.css";
 import LiveNotificationHandler from "@/components/LiveNotificationHandler";
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
+import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
   title: "v0 App",
@@ -42,6 +43,7 @@ export default function RootLayout({
         {children}
         {<LiveNotificationHandler />}
         <Analytics />
+        <Footer />
       </body>
     </html>
   );
