@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import { X, UploadCloud } from "lucide-react";
 
 // --- 1. IMPORT REACT QUILL & DYNAMIC ---
 import dynamic from "next/dynamic";
 import "react-quill-new/dist/quill.snow.css";
+
 // Import Dynamic để tắt SSR cho Quill (Tránh lỗi document is not defined)
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+
 // --- COMPONENT MẪU VÀ HÀM HỖ TRỢ ---
 
 const useToast = () => {
@@ -54,7 +56,7 @@ export function Button({
       ? "bg-transparent border border-gray-300 text-gray-900 hover:bg-gray-50"
       : variant === "destructive"
       ? "bg-red-600 text-white hover:bg-red-700"
-      : "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"; // Sửa lại màu xanh cho đẹp
+      : "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50";
   return (
     <button
       type={type || "button"}
@@ -174,26 +176,108 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Ref cho React Quill để truy cập editor instance
+  const quillRef = useRef<any>(null);
+
   const { toast } = useToast();
 
-  // --- 2. CẤU HÌNH TOOLBAR CHO EDITOR ---
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link", "image"],
-      ["clean"],
-    ],
-  };
+  // --- HÀM XỬ LÝ UPLOAD ẢNH TRONG EDITOR (Image Handler) ---
+  const imageHandler = useCallback(() => {
+    // 1. Tạo input file ẩn
+    const input = document.createElement("input");
+    input.setAttribute("type", "file");
+    input.setAttribute("accept", "image/*");
+    input.click();
 
-  // --- 3. HANDLER RIÊNG CHO DESCRIPTION (REACT QUILL) ---
-  // Quill trả về string HTML trực tiếp, không phải event
+    // 2. Lắng nghe sự kiện chọn file
+    input.onchange = async () => {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const formDataUpload = new FormData();
+        formDataUpload.append("image", file); // Key này phải khớp với upload.single("image") ở backend
+
+        try {
+          // Lấy token
+          const storedData = localStorage.getItem("authData");
+          const token = storedData ? JSON.parse(storedData).token : "";
+
+          // Gọi API upload riêng cho description
+          const res = await axios.post(
+            `${process.env.NEXT_PUBLIC_GATEWAY_API}/api/products/upload-description-image`,
+            formDataUpload,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (res.data.success) {
+            const url = res.data.url;
+
+            // 3. Chèn ảnh vào editor
+            const quill = quillRef.current.getEditor();
+            const range = quill.getSelection();
+            // Nếu mất focus thì range có thể null, ta chèn vào cuối hoặc đầu (ở đây lấy index 0 nếu null)
+            const index = range ? range.index : 0;
+
+            quill.insertEmbed(index, "image", url);
+          }
+        } catch (error) {
+          console.error("Editor Image upload failed", error);
+          toast({
+            title: "Upload Failed",
+            description: "Could not upload image to description.",
+            variant: "destructive",
+          });
+        }
+      }
+    };
+  }, [toast]);
+
+  // --- CẤU HÌNH TOOLBAR (Dùng useMemo để tránh re-render editor) ---
+  // const modules = useMemo(() => ({
+  //   toolbar: {
+  //     container: [
+  //       [{ header: [1, 2, 3, false] }],
+  //       ["bold", "italic", "underline", "strike"],
+  //       [{ list: "ordered" }, { list: "bullet" }],
+  //       ["link", "image"], // Nút image này sẽ kích hoạt handler bên dưới
+  //       ["clean"],
+  //     ],
+  //     handlers: {
+  //       image: imageHandler, // Gán custom handler vào đây
+  //     },
+  //   },
+  // }), [imageHandler]);
+  const modules = useMemo(() => {
+    return {
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, false] }],
+          ["bold", "italic", "underline", "strike"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          ["link", "image"], // Nút image
+          ["clean"],
+        ],
+        handlers: {
+          // Gán handler trực tiếp tại đây
+          image: () => {
+            console.log("Click image button detected");
+            imageHandler();
+          },
+        },
+      },
+    };
+  }, [imageHandler]);
+
+  // --- HANDLERS KHÁC ---
   const handleDescriptionChange = (value: string) => {
     setFormData((prev) => ({ ...prev, description: value }));
   };
 
-  // Handler cho các input thường
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -266,7 +350,7 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
       formDataApi.append("sold_count", formData.sold_count.toString());
       formDataApi.append("days_valid", formData.days_valid.toString());
 
-      // Gửi chuỗi HTML Description lên Server
+      // Gửi chuỗi HTML Description (đã chứa link ảnh) lên Server
       formDataApi.append("description", formData.description);
 
       formDataApi.append(
@@ -473,16 +557,14 @@ export function ProductModal({ product, onSave, onClose }: ProductModalProps) {
             <label className="block text-sm font-medium text-slate-300 mb-2">
               Description (Rich Text)
             </label>
-            {/* Wrapper div này để chỉnh style cho editor */}
-            {/* bg-white: Để nền trắng cho dễ soạn thảo (vì Modal đang tối màu) */}
-            {/* text-black: Để chữ màu đen */}
             <div className="bg-white text-black rounded-lg overflow-hidden">
               <ReactQuill
+                ref={quillRef} // Gắn ref vào đây
                 theme="snow"
                 value={formData.description}
                 onChange={handleDescriptionChange}
-                modules={modules}
-                className="h-64 mb-12" // mb-12 để tạo khoảng trống cho toolbar trên mobile
+                modules={modules} // Sử dụng modules có imageHandler
+                className="h-64 mb-12"
               />
             </div>
           </div>
