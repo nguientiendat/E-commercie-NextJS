@@ -454,63 +454,6 @@ export function Navbar() {
   };
 
   return (
-    // <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
-    //   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    //     <div className="flex items-center justify-between h-16">
-    //       <a href="/" className="flex-shrink-0">
-    //         <span className="text-xl font-bold text-black">MyEcom</span>
-    //       </a>
-    //       <div className="hidden md:flex items-center gap-8">
-    //         <a href="/" className="text-gray-700 hover:text-black font-medium">
-    //           Products
-    //         </a>
-    //       </div>
-    //       <div className="flex items-center gap-4">
-    //         <a href="/cart" className="relative">
-    //           <ShoppingBag className="w-6 h-6 text-gray-700 hover:text-black" />
-    //           {cartCount > 0 && (
-    //             <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-    //               {cartCount}
-    //             </span>
-    //           )}
-    //         </a>
-    //         {authInfo ? (
-    //           <>
-    //             <a
-    //               href="/profile"
-    //               className="flex items-center gap-2 text-gray-700 hover:text-black"
-    //             >
-    //               <User className="w-6 h-6" />
-    //               <span className="text-sm font-medium hidden sm:block truncate max-w-xs">
-    //                 {authInfo.email}
-    //               </span>
-    //             </a>
-    //             <Button
-    //               variant="outline"
-    //               size="sm"
-    //               onClick={handleLogout}
-    //               className="gap-2 bg-transparent"
-    //             >
-    //               <LogOut className="w-4 h-4" />
-    //               Logout
-    //             </Button>
-    //           </>
-    //         ) : (
-    //           <div className="flex items-center gap-2">
-    //             <a href="/login">
-    //               <Button variant="outline" size="sm">
-    //                 Login
-    //               </Button>
-    //             </a>
-    //             <a href="/register">
-    //               <Button size="sm">Sign Up</Button>
-    //             </a>
-    //           </div>
-    //         )}
-    //       </div>
-    //     </div>
-    //   </div>
-    // </nav>
     <nav className="sticky top-0 z-50 bg-[#630A0E] border-b border-[#4a070a]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
