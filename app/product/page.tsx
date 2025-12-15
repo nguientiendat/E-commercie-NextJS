@@ -201,6 +201,15 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
+// Hàm tính giá sau khi trừ discount
+const calculateDiscountedPrice = (price: number, discount?: number): number => {
+  if (!discount || discount <= 0) {
+    return price;
+  }
+  // Tính giá sau discount: giá gốc - (giá gốc * discount / 100)
+  return price - (price * discount) / 100;
+};
+
 interface AuthData {
   user: {
     email: string;
@@ -221,6 +230,7 @@ interface ApiProductDetail {
   description?: string;
   features?: string[];
   specifications?: Record<string, string>;
+  discount?: number; // Thêm field discount
   [key: string]: any;
 }
 
@@ -445,6 +455,13 @@ function ProductContent() {
     );
   }
 
+  // Tính giá sau discount
+  const discountedPrice = calculateDiscountedPrice(
+    product.price,
+    product.discount
+  );
+  const hasDiscount = product.discount && product.discount > 0;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -493,12 +510,42 @@ function ProductContent() {
                   {product.rating || 0} ({product.reviews || 0} reviews)
                 </span>
               </div>
-              <p className="text-3xl font-bold text-gray-900">
-                {formatCurrency(product.price)}
-              </p>
-            </div>
 
-            {/* Short Description removed from here */}
+              {/* Hiển thị giá với discount */}
+              <div className="space-y-2">
+                {hasDiscount ? (
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {/* Giá sau discount - màu đỏ nổi bật */}
+                    <p className="text-3xl font-bold text-red-600">
+                      {formatCurrency(discountedPrice)}
+                    </p>
+
+                    {/* Giá gốc bị gạch */}
+                    <p className="text-xl text-gray-500 line-through">
+                      {formatCurrency(product.price)}
+                    </p>
+
+                    {/* Badge giảm giá */}
+                    <span className="bg-red-500 text-white px-3 py-1 rounded-md text-sm font-bold">
+                      -{product.discount}%
+                    </span>
+                  </div>
+                ) : (
+                  // Nếu không có discount, hiển thị giá bình thường
+                  <p className="text-3xl font-bold text-gray-900">
+                    {formatCurrency(product.price)}
+                  </p>
+                )}
+
+                {/* Hiển thị số tiền tiết kiệm nếu có discount */}
+                {hasDiscount && (
+                  <p className="text-sm text-green-600 font-medium">
+                    Bạn tiết kiệm:{" "}
+                    {formatCurrency(product.price - discountedPrice)}
+                  </p>
+                )}
+              </div>
+            </div>
 
             {/* Features */}
             {product.features && product.features.length > 0 && (
@@ -522,9 +569,17 @@ function ProductContent() {
 
             {/* Stock Status */}
             {product.quantity > 0 ? (
-              <div className="text-green-600 font-semibold">In Stock</div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-green-600 font-semibold">
+                  In Stock ({product.quantity} available)
+                </span>
+              </div>
             ) : (
-              <div className="text-red-600 font-semibold">Out of Stock</div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-red-600 font-semibold">Out of Stock</span>
+              </div>
             )}
 
             {/* Quantity and Actions */}
@@ -623,7 +678,7 @@ function ProductContent() {
             </div>
           )}
 
-        {/* Product Description Section - NEW */}
+        {/* Product Description Section */}
         {product.description && (
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
