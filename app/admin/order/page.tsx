@@ -22,6 +22,15 @@ interface Order {
   __v: number;
 }
 
+interface AuthData {
+  token: string;
+  user: {
+    id: string;
+    username: string;
+    email: string;
+  };
+}
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -53,12 +62,14 @@ export default function OrdersPage() {
         throw new Error("Chưa đăng nhập. Vui lòng đăng nhập lại.");
       }
 
-      const authData = JSON.parse(authDataString);
-      const token = authData.token;
+      const authData: AuthData = JSON.parse(authDataString);
+      const token = authData?.token;
 
       if (!token) {
         throw new Error("Token không tồn tại. Vui lòng đăng nhập lại.");
       }
+
+      console.log("Token:", token); // Debug log
 
       const response = await fetch(
         "https://api.nguientiendat.online/api/orders/getorder",
@@ -71,11 +82,15 @@ export default function OrdersPage() {
         }
       );
 
+      console.log("Response status:", response.status); // Debug log
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+
+      console.log("Response data:", data); // Debug log
 
       if (data.success && data.orders) {
         setOrders(data.orders);
@@ -85,6 +100,7 @@ export default function OrdersPage() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Đã xảy ra lỗi";
+      console.error("Error:", err); // Debug log
       setError(errorMessage);
     } finally {
       setLoading(false);
