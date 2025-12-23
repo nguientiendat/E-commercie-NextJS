@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect } from "react";
 import { Search, Eye, RefreshCw, Filter, Download } from "lucide-react";
 
