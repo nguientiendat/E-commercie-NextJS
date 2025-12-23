@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Search, Eye, RefreshCw, Filter, Download } from "lucide-react";
+import { Nav } from "react-day-picker";
+import { Navbar } from "@/components/navbar";
 
 interface OrderItem {
   _id: string;
@@ -230,6 +232,7 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      <Navbar />
       <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex justify-between items-center mb-6">
