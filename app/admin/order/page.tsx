@@ -1,4 +1,3 @@
-"use client";
 import { useState, useEffect } from "react";
 import { Search, Eye, RefreshCw, Filter, Download } from "lucide-react";
 
@@ -48,7 +47,14 @@ export default function OrdersPage() {
     setError(null);
 
     try {
-      const token = localStorage.getItem("token");
+      const authDataString = localStorage.getItem("authData");
+
+      if (!authDataString) {
+        throw new Error("Chưa đăng nhập. Vui lòng đăng nhập lại.");
+      }
+
+      const authData = JSON.parse(authDataString);
+      const token = authData.token;
 
       if (!token) {
         throw new Error("Token không tồn tại. Vui lòng đăng nhập lại.");
